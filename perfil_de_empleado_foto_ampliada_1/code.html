@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Perfil del Empleado - Sistema de Gestión de Empleados</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#07497d",
+                        "surface-container-high": "#e6e8ea",
+                        "primary-fixed": "#d2e4ff",
+                        "on-tertiary-container": "#f9a767",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#6f3800",
+                        "outline": "#727780",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-primary-fixed": "#001c37",
+                        "primary-container": "#0f4c81",
+                        "tertiary-fixed-dim": "#ffb780",
+                        "background": "#f7f9fb",
+                        "on-surface-variant": "#42474f",
+                        "inverse-primary": "#a0c9ff",
+                        "on-surface": "#191c1e",
+                        "primary": "#00355f",
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary": "#505f76",
+                        "surface-container-highest": "#e0e3e5",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e0e3e5",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-secondary-fixed": "#0b1c30",
+                        "surface-container": "#eceef0",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-secondary-container": "#54647a",
+                        "on-primary-container": "#8ebdf9",
+                        "outline-variant": "#c2c7d1",
+                        "surface-dim": "#d8dadc",
+                        "inverse-surface": "#2d3133",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdcc4",
+                        "secondary-container": "#d0e1fb",
+                        "surface-bright": "#f7f9fb",
+                        "surface": "#f7f9fb",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#532800",
+                        "primary-fixed-dim": "#a0c9ff",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "on-tertiary-fixed": "#2f1400",
+                        "surface-tint": "#2d6197",
+                        "tertiary-container": "#743b00",
+                        "on-background": "#191c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "24px",
+                        "gutter": "16px",
+                        "row-height-dense": "40px",
+                        "base": "8px",
+                        "row-height-standard": "56px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "table-data": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "table-data": ["13px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+    </style>
+</head>
+<body class="flex min-h-screen text-on-surface">
+<!-- SideNavBar -->
+<aside class="flex flex-col h-full py-base fixed left-0 top-0 h-screen w-[240px] z-50 bg-surface-container border-r border-outline-variant">
+<div class="px-6 py-8 flex flex-col gap-2">
+<div class="w-10 h-10 bg-primary rounded flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">corporate_fare</span>
+</div>
+<div>
+<h2 class="text-headline-sm font-headline-sm font-bold text-primary">Panel de Administración</h2>
+<p class="text-label-md text-on-surface-variant">Suite de Gestión</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container font-bold border-r-4 border-primary transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-body-md text-body-md">Empleados</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home_work">home_work</span>
+<span class="font-body-md text-body-md">Alojamiento</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="font-body-md text-body-md">Situación Legal</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="medical_services">medical_services</span>
+<span class="font-body-md text-body-md">Atenciones</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="campaign">campaign</span>
+<span class="font-body-md text-body-md">Novedades</span>
+</a>
+</nav>
+<div class="p-4">
+<button class="w-full py-3 bg-primary text-on-primary rounded-lg font-bold hover:brightness-110 active:scale-95 transition-all text-body-md">
+                Agregar Nuevo Empleado
+            </button>
+</div>
+<div class="px-4 py-6 border-t border-outline-variant space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Configuración</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-body-md text-body-md">Cerrar Sesión</span>
+</a>
+</div>
+</aside>
+<div class="ml-[240px] flex-1 flex flex-col">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-container-padding h-row-height-standard bg-surface border-b border-outline-variant shadow-sm sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<span class="text-headline-md font-headline-md font-bold text-primary">Sistema de Gestión de Empleados</span>
+</div>
+<div class="flex-1 max-w-md mx-8">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full text-body-md focus:outline-none focus:border-primary transition-colors" placeholder="Buscar empleados..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors active:scale-95">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="h-10 w-10 rounded-full bg-secondary-container border border-outline-variant flex items-center justify-center overflow-hidden">
+<img alt="Perfil de usuario" class="w-full h-full object-cover" data-alt="Primer plano de un retrato de estudio de un administrador profesional masculino de unos 40 años. Tiene el rostro afeitado, el pelo corto y oscuro y lleva una camisa de vestir blanca impecable. El fondo es un entorno de oficina moderno desenfocado con una iluminación profesional de tonos fríos que acentúa una atmósfera corporativa y eficiente." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDF192VcG6_sh-Qgx656ReXqVRte-_ka5Lcv3cbOKOjqPcVgIx4R-vbRbgXZgcZosaudTljluJVWEHAliDcHCKYwJlqHsrvtN2WwlxbU_9W1_o4Q_DAW-WedzD2f9N6qKwOzM-FewZGvowkeD1x7F-pBC78z8-0C5X_qWA_7GmZhvKxNqZ4rxMzJfnpDoj-LeWFH72v0OdE7bT3OiplIrZUzO6VCYE1gqLHcROuJo6V_3KhjZvDtUdg37k9jq6zIfYx9myz9B0QoPE"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="p-container-padding space-y-gutter bg-background flex-1">
+<!-- Employee Hero Card -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 flex flex-col md:flex-row gap-8 items-start">
+<div class="relative group">
+<img alt="Foto del Empleado" class="rounded-xl object-cover shadow-md w-48 h-48" data-alt="Un retrato profesional de un empleado varón de mediana edad con expresión amable. Viste un polo corporativo azul. La iluminación es brillante y uniforme, típica de una configuración de estudio profesional, sobre un fondo gris claro neutro que se alinea con la estética de la interfaz corporativa minimalista. El ambiente general es de confianza y centrado en la precisión." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMQsVU8bZX0SulMTnEcypLXxlQ_3dnnzSDuRGrNyTsm2Ec_J1f4YYHvV9C0o4vuWWJJu-G1j3xN4KUJjiDXKzLhKaCx9YqiDWI3Je6fIJbgP2wR34JwlwflRzxPuN-Hie926tejb9IecaTGv6wFZJ1_yl1vSuaraYf0AC0d0r_olzTX-QvfDQDavqCdoXVE5Yj2X2uDk8PZ7BXJ_x5_Hs_5zY6BeFlKHmF7lBKmjqhwHp6083uSUsJLtOy4jWbv6Y6KSsSkBRok7I"/>
+<button class="absolute -bottom-2 -right-2 bg-primary text-on-primary p-2 rounded-lg shadow-lg hover:brightness-110 active:scale-90 transition-all">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+<div class="flex-1 space-y-4">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h1 class="text-headline-lg font-headline-lg text-primary">Javier Alejandro Morales</h1>
+<p class="text-body-lg text-on-surface-variant font-medium">Supervisor Técnico Senior · ID: #EMP-88291</p>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-label-md border border-green-200">ACTIVO</span>
+<span class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-label-md border border-outline-variant">DEPTO: OPERACIONES</span>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 py-4 border-t border-outline-variant">
+<div>
+<span class="text-label-md text-on-surface-variant block mb-1">CORREO</span>
+<span class="text-body-md font-semibold">j.morales@corp-ems.com</span>
+</div>
+<div>
+<span class="text-label-md text-on-surface-variant block mb-1">TELÉFONO</span>
+<span class="text-body-md font-semibold">+1 (555) 012-9934</span>
+</div>
+<div>
+<span class="text-label-md text-on-surface-variant block mb-1">FECHA DE INGRESO</span>
+<span class="text-body-md font-semibold">12 de marzo, 2019</span>
+</div>
+<div>
+<span class="text-label-md text-on-surface-variant block mb-1">UBICACIÓN</span>
+<span class="text-body-md font-semibold">HQ Sur, Sitio B</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Detailed Management Sections -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<!-- SITUACIÓN LEGAL -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="gavel">gavel</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">SITUACIÓN LEGAL</h3>
+</div>
+<button class="flex items-center gap-1 text-primary hover:underline text-label-md font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span> REGISTRAR NUEVO
+                        </button>
+</div>
+<div class="p-6 space-y-4">
+<div class="border rounded-lg border-outline-variant">
+<details class="group">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Actualización de Estado de Visa - H1B</span>
+<span class="text-label-md text-on-surface-variant">Exp: 10/2025 · Documento #V-11223</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant space-y-3">
+<p class="text-body-md text-on-surface-variant">El empleado ha completado el proceso de renovación de la visa de trabajo actual. No se esperan obstáculos legales adicionales para el próximo año fiscal.</p>
+<div class="flex gap-4">
+<div class="flex-1">
+<span class="text-label-md text-on-surface-variant block">Fecha de Actualización</span>
+<span class="text-body-sm">2023-11-15</span>
+</div>
+<div class="flex-1">
+<span class="text-label-md text-on-surface-variant block">Autorizado Por</span>
+<span class="text-body-sm">Depto. Legal</span>
+</div>
+</div>
+</div>
+</details>
+</div>
+<div class="border rounded-lg border-outline-variant">
+<details class="group">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Certificado Anual de Cumplimiento</span>
+<span class="text-label-md text-on-surface-variant">Firmado: 01/2024</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant">
+<p class="text-body-md text-on-surface-variant">Completados todos los módulos obligatorios de capacitación en seguridad y ética. ID del Certificado: COMP-990-2024.</p>
+</div>
+</details>
+</div>
+</div>
+</section>
+<!-- HISTORIAL DE ALOJAMIENTO -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="home_work">home_work</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">HISTORIAL DE ALOJAMIENTO</h3>
+</div>
+<button class="flex items-center gap-1 text-primary hover:underline text-label-md font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span> ACTUALIZAR ESTANCIA
+                        </button>
+</div>
+<div class="p-6 space-y-4">
+<div class="border rounded-lg border-outline-variant">
+<details class="group" open="">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Complejo Residencial Sur - Unidad 402</span>
+<span class="text-label-md text-on-surface-variant">Ocupación Actual · Desde 06/2022</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant space-y-3">
+<div class="grid grid-cols-2 gap-4">
+<div>
+<span class="text-label-md text-on-surface-variant block">Fecha de Entrada</span>
+<span class="text-body-md">2022-06-01</span>
+</div>
+<div>
+<span class="text-label-md text-on-surface-variant block">Estado</span>
+<span class="text-body-md text-green-700 font-bold">Ocupado</span>
+</div>
+</div>
+<div>
+<span class="text-label-md text-on-surface-variant block">Notas</span>
+<p class="text-body-md text-on-surface-variant italic">El empleado informó necesidad de mantenimiento menor para el sistema HVAC en 12/2023. Resuelto.</p>
+</div>
+</div>
+</details>
+</div>
+<div class="border rounded-lg border-outline-variant opacity-60">
+<details class="group">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Hotel de Tránsito Temporal - Ala B</span>
+<span class="text-label-md text-on-surface-variant">Archivado · 03/2022 - 05/2022</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant">
+<p class="text-body-md text-on-surface-variant">Alojamiento temporal durante la fase de reubicación. No se informaron problemas.</p>
+</div>
+</details>
+</div>
+</div>
+</section>
+<!-- HISTORIAL DE ATENCIONES -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="medical_services">medical_services</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">HISTORIAL DE ATENCIONES</h3>
+</div>
+<button class="flex items-center gap-1 text-primary hover:underline text-label-md font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span> REGISTRAR VISITA
+                        </button>
+</div>
+<div class="p-6 space-y-4">
+<div class="border rounded-lg border-outline-variant">
+<details class="group">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Examen Físico Anual</span>
+<span class="text-label-md text-on-surface-variant">Fecha: 10/02/2024 · Centro Clínico</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-label-md font-bold px-2 py-1 bg-blue-100 text-blue-800 rounded">CHEQUEO DE RUTINA</span>
+<span class="text-body-sm font-semibold">Médico: Dra. Sarah Jenkins</span>
+</div>
+<p class="text-body-md text-on-surface-variant">Paciente apto para todas las tareas de carga pesada. Prueba de visión confirmó 20/20 con prescripción actual.</p>
+</div>
+</details>
+</div>
+<div class="border rounded-lg border-outline-variant">
+<details class="group">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Sesión de Terapia Ocupacional</span>
+<span class="text-label-md text-on-surface-variant">Fecha: 14/11/2023 · Equipo de Ergonomía</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant">
+<p class="text-body-md text-on-surface-variant">Evaluación del espacio de trabajo completada. Recomendación: Se solicitó y entregó nueva silla con soporte lumbar.</p>
+</div>
+</details>
+</div>
+</div>
+</section>
+<!-- NOVEDADES -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="campaign">campaign</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">NOVEDADES</h3>
+</div>
+<button class="flex items-center gap-1 text-primary hover:underline text-label-md font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span> NUEVA ENTRADA
+                        </button>
+</div>
+<div class="p-6 space-y-4">
+<div class="border rounded-lg border-outline-variant">
+<details class="group" open="">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Promoción a Nivel Senior</span>
+<span class="text-label-md text-on-surface-variant">Efectivo: 01/2024 · Acción de RR.HH.</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant space-y-3">
+<p class="text-body-md text-on-surface-variant font-medium">Ajuste salarial y responsabilidades del puesto actualizadas según los resultados de la revisión de desempeño del Q4.</p>
+<div class="flex justify-between items-center text-label-md">
+<span class="text-on-surface-variant italic">Nota: Documentación de entrega completa.</span>
+<span class="font-bold text-primary cursor-pointer">Ver Contrato</span>
+</div>
+</div>
+</details>
+</div>
+<div class="border rounded-lg border-outline-variant">
+<details class="group">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Informe de Incidente: Daño de Activo</span>
+<span class="text-label-md text-on-surface-variant">Fecha: 10/2023 · Pérdida de Equipo</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant">
+<p class="text-body-md text-error font-medium">Escáner de mano caído durante la inspección de campo. Reparaciones deducidas del seguro. Resuelto.</p>
+</div>
+</details>
+</div>
+</div>
+</section>
+<!-- HISTORIAL DE CALIFICACIONES -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">star</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">HISTORIAL DE CALIFICACIONES</h3>
+</div>
+<button class="flex items-center gap-1 text-primary hover:underline text-label-md font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span> REGISTRAR CALIFICACIÓN
+                        </button>
+</div>
+<div class="p-6 space-y-4">
+<div class="border rounded-lg border-outline-variant">
+<details class="group">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Revisión Anual de Desempeño 2023</span>
+<span class="text-label-md text-on-surface-variant">Calificación: 4.8/5.0 · Q4 2023</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant">
+<p class="text-body-md text-on-surface-variant">Superó las expectativas en supervisión técnica y liderazgo de equipo. Implementó con éxito el nuevo protocolo de eficiencia para el Sitio B.</p>
+</div>
+</details>
+</div>
+<div class="border rounded-lg border-outline-variant">
+<details class="group">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Dominio de Certificación Técnica</span>
+<span class="text-label-md text-on-surface-variant">Calificación: Sobresaliente · 06/2023</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant">
+<p class="text-body-md text-on-surface-variant">Demostró conocimientos excepcionales durante la auditoría interna de sistemas y el programa de certificación de supervisores.</p>
+</div>
+</details>
+</div>
+</div>
+</section>
+<!-- HISTORIAL DE SANCIONES -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">warning</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">HISTORIAL DE SANCIONES</h3>
+</div>
+<button class="flex items-center gap-1 text-primary hover:underline text-label-md font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span> REPORTAR INCIDENTE
+                        </button>
+</div>
+<div class="p-6 space-y-4">
+<div class="border rounded-lg border-outline-variant">
+<details class="group">
+<summary class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col">
+<span class="text-body-md font-bold">Advertencia Verbal: Protocolo de Seguridad</span>
+<span class="text-label-md text-on-surface-variant">Fecha: 05/2022 · Cumplimiento del Sitio</span>
+</div>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-4 bg-surface-container-lowest border-t border-outline-variant">
+<p class="text-body-md text-on-surface-variant">Infracción menor de seguridad relacionada con el uso de equipo de protección personal en la Zona C. Capacitación de refuerzo completada inmediatamente.</p>
+</div>
+</details>
+</div>
+<div class="p-4 flex flex-col items-center justify-center text-on-surface-variant py-8 opacity-60">
+<span class="material-symbols-outlined text-[48px] mb-2">check_circle</span>
+<p class="text-body-md">No hay sanciones activas importantes en el registro.</p>
+</div>
+</div>
+</section>
+</div>
+<!-- Notes Section -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6">
+<div class="flex items-center gap-3 mb-4">
+<span class="material-symbols-outlined text-primary">description</span>
+<h3 class="font-headline-sm text-headline-sm text-primary">Notas Administrativas Generales</h3>
+</div>
+<div class="space-y-4">
+<textarea class="w-full border border-outline-variant rounded-lg p-4 text-body-md focus:ring-2 focus:ring-primary focus:outline-none bg-surface-container-low" placeholder="Ingrese cualquier observación o comentario adicional sobre el historial o desempeño del empleado..." rows="4"></textarea>
+<div class="flex justify-end gap-3">
+<button class="px-6 py-2 text-secondary font-bold text-body-md hover:bg-surface-container-high rounded-lg transition-colors">Limpiar</button>
+<button class="px-6 py-2 bg-primary text-on-primary font-bold text-body-md rounded-lg shadow-sm hover:brightness-110 active:scale-95 transition-all">Guardar Cambios</button>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>

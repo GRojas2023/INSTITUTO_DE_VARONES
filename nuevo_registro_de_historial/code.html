@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed-variant": "#07497d",
+                    "surface-container-high": "#e6e8ea",
+                    "primary-fixed": "#d2e4ff",
+                    "on-tertiary-container": "#f9a767",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed-variant": "#6f3800",
+                    "outline": "#727780",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed": "#d3e4fe",
+                    "on-primary-fixed": "#001c37",
+                    "primary-container": "#0f4c81",
+                    "tertiary-fixed-dim": "#ffb780",
+                    "background": "#f7f9fb",
+                    "on-surface-variant": "#42474f",
+                    "inverse-primary": "#a0c9ff",
+                    "on-surface": "#191c1e",
+                    "primary": "#00355f",
+                    "on-error": "#ffffff",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary": "#505f76",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-container-highest": "#e0e3e5",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e0e3e5",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-secondary-fixed": "#0b1c30",
+                    "surface-container": "#eceef0",
+                    "on-error-container": "#93000a",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "on-secondary-container": "#54647a",
+                    "on-primary-container": "#8ebdf9",
+                    "outline-variant": "#c2c7d1",
+                    "surface-dim": "#d8dadc",
+                    "inverse-surface": "#2d3133",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed": "#ffdcc4",
+                    "secondary-container": "#d0e1fb",
+                    "surface-bright": "#f7f9fb",
+                    "surface": "#f7f9fb",
+                    "error-container": "#ffdad6",
+                    "tertiary": "#532800",
+                    "primary-fixed-dim": "#a0c9ff",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "on-tertiary-fixed": "#2f1400",
+                    "surface-tint": "#2d6197",
+                    "tertiary-container": "#743b00",
+                    "on-background": "#191c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-padding": "24px",
+                    "gutter": "16px",
+                    "row-height-dense": "40px",
+                    "base": "8px",
+                    "row-height-standard": "56px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "table-data": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "table-data": ["13px", {"lineHeight": "16px", "fontWeight": "400"}],
+                    "headline-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex overflow-hidden">
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed left-0 top-0 h-screen w-[240px] z-50 flex flex-col h-full py-base bg-surface-container dark:bg-surface-container border-r border-outline-variant dark:border-outline">
+<div class="px-6 py-8 flex flex-col gap-2">
+<div class="w-12 h-12 rounded-lg bg-primary-container flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+</div>
+<h1 class="text-headline-sm font-headline-sm font-bold text-primary dark:text-primary-fixed-dim">Admin Panel</h1>
+<p class="text-body-sm text-on-surface-variant">Management Suite</p>
+</div>
+<nav class="flex-1 px-4 space-y-1 overflow-y-auto custom-scrollbar">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-body-md">Employees</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="home_work">home_work</span>
+<span class="font-body-md">Housing</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="font-body-md">Legal History</span>
+</a>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary-container text-on-secondary-container dark:bg-primary-container dark:text-on-primary-container font-bold border-r-4 border-primary transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="medical_services" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+<span class="font-body-md">Attentions</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="campaign">campaign</span>
+<span class="font-body-md">News</span>
+</a>
+</nav>
+<div class="p-4 mt-auto border-t border-outline-variant">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high mb-1" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-body-md">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-[240px] flex-1 relative overflow-y-auto min-h-screen">
+<!-- TopNavBar (Shared Component) -->
+<header class="flex justify-between items-center w-full px-container-padding h-row-height-standard bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline shadow-sm sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="absolute inset-y-0 left-3 flex items-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-body-md w-64" placeholder="Search Attentions..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="h-8 w-px bg-outline-variant mx-2"></div>
+<img alt="User profile" class="w-8 h-8 rounded-full border border-outline-variant" data-alt="A professional portrait of a corporate administrator in a modern office environment. The person is wearing a crisp business casual outfit, illuminated by bright, natural window light. The background is a clean, minimalist workspace with soft bokeh of glass partitions and office plants, fitting the corporate modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7sdegVPMXYtpB2DoRHl5cusiIIX8qgTakEUQVJLDKcj1eaWKobluVfiJHR28QJXKbIyeKcd6tSnJ-M06AmTYErVqSV0msMThdWw0N1dnzAT5A0GaTOEyjvO0BHCtv1g1cDV8oRMMjzTGJZaXyXbOWGbyFR9Swy_QSklkJAcCIaD_ylIIZjUDwbVN9y-Xv8n9ZHRh39Tpt4DdESU84POtq2Ka3N-NyRmdW-FLSLD2Dy59V1R_zl_LoxpJfD6OvQnIw_lcokI6clow"/>
+</div>
+</header>
+<!-- Dashboard Canvas (Background Context) -->
+<div class="p-container-padding bg-background">
+<div class="mb-8 flex items-center justify-between">
+<div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface mb-1">Registro de Novedades</h2>
+<p class="text-body-lg text-on-surface-variant">Administra y registra atenciones para el personal.</p>
+</div>
+<button class="bg-primary text-on-primary px-6 py-3 rounded-lg font-bold flex items-center gap-2 shadow-sm hover:brightness-110 active:scale-95 transition-all">
+<span class="material-symbols-outlined">add</span>
+                    Nueva Atención
+                </button>
+</div>
+<!-- Empty State / Placeholder Grid -->
+<div class="grid grid-cols-12 gap-gutter">
+<div class="col-span-12 md:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm min-h-[400px] flex flex-col items-center justify-center text-center opacity-40">
+<span class="material-symbols-outlined text-[64px] mb-4 text-outline-variant">assignment</span>
+<h3 class="text-headline-sm">No hay registros seleccionados</h3>
+<p class="text-body-md">Selecciona un empleado para ver su historial de novedades.</p>
+</div>
+<div class="col-span-12 md:col-span-4 flex flex-col gap-gutter">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm h-48 opacity-40"></div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 shadow-sm h-48 opacity-40"></div>
+</div>
+</div>
+</div>
+<!-- SIDE DRAWER OVERLAY -->
+<div class="fixed inset-0 bg-on-surface/40 backdrop-blur-[2px] z-[60] flex justify-end">
+<!-- DRAWER CONTENT -->
+<div class="bg-surface w-full max-w-[480px] h-full shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
+<!-- Drawer Header -->
+<div class="px-6 py-6 border-b border-outline-variant flex items-center justify-between bg-surface-bright">
+<div>
+<h3 class="text-headline-md font-headline-md text-on-surface">Nueva Novedad</h3>
+<p class="text-body-sm text-on-surface-variant mt-1">Completa los datos para registrar la atención</p>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Drawer Form Body -->
+<div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+<form class="space-y-6">
+<!-- Employee Info Card (Read Only) -->
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-4 flex items-center gap-4">
+<img alt="Employee Photo" class="w-12 h-12 rounded-full object-cover" data-alt="A close-up headshot of a male office worker with a friendly expression. He is wearing a professional light-blue shirt. The portrait has soft, clean lighting with a neutral, slightly blurred office background, maintaining the high-utility and professional atmosphere of the corporate system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSK4sKovCL9lRBiakPVg5qa9stMSO90bLOrKCTqV5DTfTqmjTnL1Sbw8ueCCFFMVfUhbGcTut610my5uVOC4KH3aaVflm7qupYeK8hOvzTf7OVvhoXeagsu57dU1Rkviptu3SJGongLDSR8HZ4GPa6LAEuOHbng_bkc97eEuiX1wujBMWERYRlDV-ZZAND9oovgOxZYNPQmp7AD0vNGh6sYBblC9m8dElkLTXwmK0i3HSvDxcVub2tp2954keV0X6v9BZ3Bg8Nj9A"/>
+<div>
+<p class="text-label-md text-primary">EMPLEADO SELECCIONADO</p>
+<p class="text-body-lg font-bold text-on-surface">Roberto García Méndez</p>
+<p class="text-body-sm text-on-surface-variant">ID: #EMP-8829 • Planta Industrial</p>
+</div>
+</div>
+<!-- Date & Category Row -->
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="text-label-md text-on-surface font-semibold">Fecha de Evento</label>
+<div class="relative">
+<input class="w-full h-row-height-standard px-4 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-body-md transition-all outline-none" type="date" value="2023-11-24"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-label-md text-on-surface font-semibold">Prioridad</label>
+<div class="relative">
+<select class="w-full h-row-height-standard px-4 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-body-md transition-all outline-none appearance-none">
+<option>Normal</option>
+<option>Urgente</option>
+<option>Crítica</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-4 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Dropdown: Category -->
+<div class="space-y-2">
+<label class="text-label-md text-on-surface font-semibold">Categoría de Atención</label>
+<div class="relative">
+<select class="w-full h-row-height-standard px-4 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-body-md transition-all outline-none appearance-none">
+<option disabled="" selected="" value="">Selecciona una categoría...</option>
+<option>Permiso Médico</option>
+<option>Sanción Disciplinaria</option>
+<option>Capacitación Externa</option>
+<option>Accidente Laboral</option>
+<option>Felicitación / Bono</option>
+<option>Cambio de Turno</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-4 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Dropdown: Reason -->
+<div class="space-y-2">
+<label class="text-label-md text-on-surface font-semibold">Motivo Específico</label>
+<div class="relative">
+<select class="w-full h-row-height-standard px-4 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-body-md transition-all outline-none appearance-none">
+<option disabled="" selected="" value="">Elige un motivo...</option>
+<option>Inasistencia Justificada</option>
+<option>Inasistencia Injustificada</option>
+<option>Retraso &gt; 30 min</option>
+<option>Salida Anticipada</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-4 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Text Area: Description -->
+<div class="space-y-2">
+<label class="text-label-md text-on-surface font-semibold">Descripción de la Novedad</label>
+<textarea class="w-full p-4 bg-surface border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-body-md transition-all outline-none resize-none" placeholder="Describe detalladamente los hechos, testigos y acciones tomadas..." rows="6"></textarea>
+<p class="text-[11px] text-on-surface-variant text-right">Mínimo 20 caracteres recomendados.</p>
+</div>
+<!-- Attachment Placeholder -->
+<div class="space-y-2">
+<label class="text-label-md text-on-surface font-semibold">Evidencia (Opcional)</label>
+<div class="border-2 border-dashed border-outline-variant rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-primary text-[32px]">cloud_upload</span>
+<div class="text-center">
+<p class="text-body-sm font-bold text-on-surface">Subir archivos o imágenes</p>
+<p class="text-[11px] text-on-surface-variant">PDF, JPG o PNG hasta 10MB</p>
+</div>
+</div>
+</div>
+</form>
+</div>
+<!-- Drawer Footer -->
+<div class="px-6 py-6 border-t border-outline-variant bg-surface-bright flex gap-3">
+<button class="flex-1 h-row-height-standard border border-outline-variant text-on-surface font-bold rounded-lg hover:bg-surface-container-high active:scale-[0.98] transition-all">
+                        Cancelar
+                    </button>
+<button class="flex-1 h-row-height-standard bg-primary text-on-primary font-bold rounded-lg shadow-sm hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">save</span>
+                        Guardar Registro
+                    </button>
+</div>
+</div>
+</div>
+</main>
+</body></html>
