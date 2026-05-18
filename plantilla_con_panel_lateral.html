@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Nueva pagina - Sistema de Gestion de Internos</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#00355f",
+                        "primary-container": "#0f4c81",
+                        "on-primary": "#ffffff",
+                        surface: "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#d0e1fb",
+                        "on-secondary-container": "#54647a",
+                        "on-surface": "#191c1e",
+                        "on-surface-variant": "#42474f",
+                        "outline-variant": "#c2c7d1"
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        body {
+            font-family: Inter, sans-serif;
+            background: #f7f9fb;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-on-surface">
+    <aside class="fixed left-0 top-0 z-50 flex h-screen w-[240px] flex-col border-r border-outline-variant bg-surface-container">
+        <div class="px-6 py-8">
+            <div class="mb-3 flex h-10 w-10 items-center justify-center rounded bg-primary text-on-primary">
+                <span class="material-symbols-outlined">corporate_fare</span>
+            </div>
+            <h1 class="text-xl font-bold leading-7 text-primary">Instituto Federal de Varones</h1>
+        </div>
+
+        <nav class="flex-1 space-y-1 px-4">
+            <a class="flex items-center gap-3 px-4 py-3 font-bold text-on-secondary-container hover:bg-surface-container-high" href="resumen_de_interno.html">
+                <span class="material-symbols-outlined">group</span>
+                <span>Resumen del Interno</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high" href="alojamiento_general.html">
+                <span class="material-symbols-outlined">home_work</span>
+                <span>Alojamiento Gral.</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high" href="panel_de_visualizacion.html">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span>Panel de Visualizacion</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high" href="atenciones.html">
+                <span class="material-symbols-outlined">campaign</span>
+                <span>Atenciones</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high" href="parte_diario.html">
+                <span class="material-symbols-outlined">history_edu</span>
+                <span>Parte Diario</span>
+            </a>
+            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high" href="boleta_de_bajada.html">
+                <span class="material-symbols-outlined">draw</span>
+                <span>Boleta de Bajada</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="ml-[240px] min-h-screen">
+        <header class="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-outline-variant bg-surface px-6 shadow-sm">
+            <h2 class="text-xl font-bold text-primary">Titulo de la pagina</h2>
+        </header>
+
+        <main class="p-6">
+            <section class="rounded-lg border border-outline-variant bg-surface-container-lowest p-6 shadow-sm">
+                <h3 class="mb-2 text-lg font-bold text-on-surface">Contenido principal</h3>
+                <p class="text-sm text-on-surface-variant">Usar esta plantilla para crear nuevas paginas manteniendo fijo el panel izquierdo.</p>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
