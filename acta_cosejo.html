@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acta Consejo Correccional</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #101820;
+      --muted: #4f5b66;
+      --line: #9aa7b3;
+      --paper: #ffffff;
+      --screen: #eef3f8;
+      --brand: #234967;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--screen);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.45;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      min-height: 58px;
+      padding: 10px 18px;
+      background: #f7f9fc;
+      border-bottom: 1px solid #c6d0db;
+    }
+
+    .toolbar strong {
+      color: var(--brand);
+      font-size: 17px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button,
+    a.button {
+      min-height: 36px;
+      padding: 0 14px;
+      border: 1px solid #1d4161;
+      border-radius: 4px;
+      background: var(--brand);
+      color: #ffffff;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    a.button.secondary {
+      background: #ffffff;
+      color: var(--brand);
+    }
+
+    .page {
+      width: min(210mm, calc(100% - 28px));
+      min-height: 297mm;
+      margin: 18px auto;
+      padding: 24mm 22mm;
+      background: var(--paper);
+      box-shadow: 0 10px 40px rgb(16 24 32 / 18%);
+    }
+
+    p {
+      margin: 0 0 14px;
+      text-align: justify;
+      font-size: 15px;
+    }
+
+    .placeholder {
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .acta-body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #000000;
+    }
+
+    .acta-body p {
+      font-size: 14px;
+    }
+
+    .red {
+      color: #ff0000;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .area-paragraph.empty {
+      display: none;
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: calc(100% - 16px);
+        min-height: auto;
+        padding: 24px 18px;
+      }
+
+      .meta,
+      .signature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .field {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+
+      .toolbar {
+        display: none;
+      }
+
+      .page {
+        width: auto;
+        min-height: auto;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <div>
+      <strong>Acta Consejo Correccional</strong>
+      <span class="status" id="load-status">Cargando datos...</span>
+    </div>
+    <div class="toolbar-actions">
+      <a class="button secondary" href="consejo_correccional.html">Volver</a>
+      <button type="button" id="download-word-button">Descargar Word</button>
+      <button type="button" id="print-button">Imprimir</button>
+    </div>
+  </header>
+
+  <main class="page" aria-label="Acta del Consejo Correccional">
+    <section class="acta-body">
+      <p style="text-align:justify"><span style="color:#FF0000" data-computed="lineaSuperior"></span></p>
+
+      <p style="text-align:justify">&nbsp;</p>
+
+      <p style="text-align:center"><span style="font-size:14px"><strong><span style="color:#FF0000" data-computed="tituloActa"></span><br>
+      <span data-computed="intervieneTitulo"></span> DEL INSTITUTO FEDERAL DE VARONES - C.P.F. III - NOA</strong></span></p>
+
+      <p style="text-align:justify"><span style="font-size:14px" data-computed="apertura"></span></p>
+
+      <p style="text-align:justify"><span style="font-size:14px"><span style="color:#FF0000" data-computed="tratamiento"></span></span></p>
+
+      <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Criminologia"><span style="font-size:14px"><strong>SERVICIO CRIMINOLOGICO</strong>: <span data-area="Criminologia"></span></span></p>
+
+      <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Seguridad Interna"><span style="font-size:14px"><strong>DIVISION SEGURIDAD INTERNA:</strong> <span data-area="Seguridad Interna"></span></span></p>
+
+      <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Salud Mental"><span style="font-size:14px"><strong>SERVICIO DE SALUD MENTAL:</strong> <span data-area="Salud Mental"></span></span></p>
+
+      <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Asistencia Medica"><span style="font-size:14px"><strong>SERVICIO ASISTENCIA MEDICA:</strong> <span data-area="Asistencia Medica"></span></span></p>
+
+      <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Trabajo"><span style="font-size:14px"><strong>DIVISION TRABAJO:</strong> <span data-area="Trabajo"></span></span></p>
+
+      <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Educacion"><span style="font-size:14px"><strong>SECCION EDUCACION:</strong> <span data-area="Educacion"></span></span></p>
+
+      <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Sociales"><span style="font-size:14px"><strong>SECCION ASISTENCIA SOCIAL:</strong> <span data-area="Sociales"></span></span></p>
+
+      <p style="text-align:justify"><span style="font-size:14px"><strong>CONCLUSIONES GENERALES:</strong> <span data-computed="conclusiones"></span></span></p>
+
+      <p style="text-align:justify"><span style="font-size:14px">No siendo para mas se da por finalizado el Acto firmando al pie y de conformidad la totalidad de los integrantes del <span data-computed="intervieneOracion"></span> en lugar y fecha preindicado. -&nbsp;</span></p>
+    </section>
+  </main>
+
+  <script>
+    const statusNode = document.querySelector("#load-status");
+    const printButton = document.querySelector("#print-button");
+    const downloadWordButton = document.querySelector("#download-word-button");
+    const apiEndpoint = window.location.protocol === "file:"
+      ? "http://127.0.0.1:8780/api/consejo"
+      : "/api/consejo";
+    const consejoSettingsEndpoint = window.location.protocol === "file:"
+      ? "http://127.0.0.1:8780/api/config/consejo-correccional"
+      : "/api/config/consejo-correccional";
+    const ceipSettingsEndpoint = window.location.protocol === "file:"
+      ? "http://127.0.0.1:8780/api/config/centro-evaluacion-procesados"
+      : "/api/config/centro-evaluacion-procesados";
+
+    const normalizeKey = (value) => String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+
+    const fieldAliases = {
+      "L.P.U. N": ["L.P.U. N", "L.P.U. N°", "LPU", "L.P.U"],
+      "C.O-Expediente": ["C.O-Expediente", "CO Expediente", "C.O Expediente"],
+      "Contestacion o Redirigido": ["Contestacion o Redirigido", "Contestación o Redirigido"],
+      "Asistencia Medica": ["Asistencia Medica", "Asistencia Médica"],
+      "Educacion": ["Educacion", "Educación"],
+      "Criminologia": ["Criminologia", "Criminología"],
+      "Interviene": ["Interviene", "INTERVIENE"],
+    };
+
+    let record = { headers: [], row: [] };
+    let autoridadConfigurada = "";
+
+    const getValue = (fieldName) => {
+      const names = fieldAliases[fieldName] || [fieldName];
+      const wanted = names.map(normalizeKey);
+      const index = record.headers.findIndex((header) => wanted.includes(normalizeKey(header)));
+      return index >= 0 ? String(record.row[index] || "").trim() : "";
+    };
+
+    const getYear = () => {
+      const dateText = getValue("Fecha de Envio") || getValue("Fecha Inicio");
+      const match = dateText.match(/\b(20\d{2})\b/);
+      return match ? match[1] : String(new Date().getFullYear());
+    };
+
+    const getActaNumber = () => {
+      const source = getValue("Oficio") || getValue("CCOO") || getValue("C.O-Expediente") || "";
+      const match = source.match(/\b(\d{1,4})\b/);
+      return String(match ? match[1] : "000").padStart(3, "0");
+    };
+
+    const getIntervieneSigla = () => {
+      const intervieneKey = normalizeKey(getInterviene());
+
+      if (intervieneKey === "consejocorreccional") {
+        return "C.C.";
+      }
+
+      return "C.E.I.P.";
+    };
+
+    const getAutoridadCargo = () => (
+      normalizeKey(getInterviene()) === "consejocorreccional"
+        ? "señor Director"
+        : "señor Subdirector"
+    );
+
+    const getActaLabel = () => `ACTA Nº ${getActaNumber()} / ${getYear().replace("20", "2.0")} (${getIntervieneSigla()})`;
+    const getActaTopLabel = () => `ACTA Nº ${getActaNumber()}/${getYear()} (${getIntervieneSigla()})`;
+
+    const parseDateParts = () => {
+      const monthNames = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+      ];
+      const today = new Date();
+      return {
+        day: String(today.getDate()).padStart(2, "0"),
+        month: monthNames[today.getMonth()],
+        year: String(today.getFullYear()),
+      };
+    };
+
+    const getInternoConLpu = () => {
+      const interno = getValue("Interno") || "INTERNO";
+      const lpu = getValue("L.P.U. N") || "S/D";
+      return `${interno} (L.P.U. Nº ${lpu})`;
+    };
+
+    const toSentenceCase = (value) => {
+      const text = String(value || "").trim().toLocaleLowerCase("es-AR");
+      const sentence = text.replace(/(^|[.!?]\s+)([a-záéíóúñü])/g, (match, prefix, letter) => (
+        `${prefix}${letter.toLocaleUpperCase("es-AR")}`
+      ));
+
+      return sentence
+        .replace(/\bCentro de evaluacion de internos procesados\b/gi, "Centro de Evaluación de Internos Procesados")
+        .replace(/\bCentro de evaluación de internos procesados\b/gi, "Centro de Evaluación de Internos Procesados")
+        .replace(/\bConsejo correccional\b/gi, "Consejo Correccional");
+    };
+
+    const getInterviene = () => getValue("Interviene") || "CENTRO DE EVALUACION DE INTERNOS PROCESADOS";
+
+    const getAutoridadConfigurada = () => autoridadConfigurada || "Alcaide Mayor Sebastian VELARDE";
+
+    const loadAutoridadConfigurada = async () => {
+      const endpoint = normalizeKey(getInterviene()) === "consejocorreccional"
+        ? consejoSettingsEndpoint
+        : ceipSettingsEndpoint;
+
+      try {
+        const response = await fetch(endpoint);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "No se pudo cargar la configuracion de autoridad.");
+        }
+
+        autoridadConfigurada = String(data.rows?.[1]?.[1] || "").trim();
+      } catch {
+        autoridadConfigurada = "";
+      }
+    };
+
+    const computedValues = {
+      lineaSuperior: () => `${getActaTopLabel()} - ${getValue("Tramite") || "Tramite"} INTERNO ${getValue("Interno") || "INTERNO"}, L.P.U.: ${getValue("L.P.U. N") || "S/D"})`,
+      tituloActa: () => getActaLabel(),
+      intervieneTitulo: () => getInterviene().toLocaleUpperCase("es-AR"),
+      intervieneOracion: () => toSentenceCase(getInterviene()),
+      apertura: () => {
+        const date = parseDateParts();
+        return `En el Instituto Federal de Varones del Complejo Penitenciario Federal III "Centro Federal Noroeste Argentino" dependiente del Servicio Penitenciario Federal a los ${date.day} dias del mes de ${date.month} del año ${date.year}, se procede a labrar la presente al solo efecto de dejar constancia de la reunion efectuada por el ${toSentenceCase(getInterviene())}, presidida por el ${getAutoridadCargo()} del Instituto el ${getAutoridadConfigurada()} e integrada por los Jefes de cada una de las areas relativas a la aplicacion del tratamiento penitenciario y/o sus representantes directos, actuando como Secretario el Adjutor Principal Lic. Sergio Leonardo Garcia.`;
+      },
+      tratamiento: () => {
+        const enviadoA = getValue("Enviado A") || "el area interviniente";
+        const expediente = getValue("C.O-Expediente") || getValue("CCOO") || "expediente sin registrar";
+        const tramite = getValue("Tramite") || "lo solicitado";
+        return `En esta oportunidad se trato lo solicitado por ${enviadoA}, mediante expediente ${expediente}, respecto al ${tramite} del interno ${getInternoConLpu()}.`;
+      },
+      conclusiones: () => getValue("Contestacion o Redirigido") || `En consecuencia, y en concordancia con las areas tecnicas intervinientes, se deja constancia de lo tratado respecto del tramite solicitado para el interno ${getInternoConLpu()}.`,
+    };
+
+    const fillActa = () => {
+      document.querySelectorAll("[data-field]").forEach((node) => {
+        node.textContent = getValue(node.dataset.field) || "................................";
+      });
+
+      document.querySelectorAll("[data-computed]").forEach((node) => {
+        const resolver = computedValues[node.dataset.computed];
+        node.textContent = resolver ? resolver() : "";
+      });
+
+      document.querySelectorAll("[data-area]").forEach((node) => {
+        const value = getValue(node.dataset.area);
+        const wrapper = document.querySelector(`[data-area-wrapper="${node.dataset.area}"]`);
+        node.textContent = value;
+        wrapper?.classList.toggle("empty", !value);
+      });
+    };
+
+    const sanitizeFileName = (value) => String(value || "acta-consejo")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 120) || "acta-consejo";
+
+    const downloadWord = () => {
+      const acta = document.querySelector(".acta-body")?.cloneNode(true);
+      if (!acta) return;
+
+      const title = document.querySelector("[data-computed='tituloActa']")?.textContent || "Acta Consejo Correccional";
+      const interno = getValue("Interno") || "acta";
+      const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${title}</title>
+  <style>
+    @page { margin: 2.4cm 2.2cm; }
+    body {
+      color: #000000;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    p {
+      margin: 0 0 14px;
+      text-align: justify;
+      font-size: 14px;
+    }
+    .red { color: #ff0000; }
+    .center { text-align: center; }
+    .area-paragraph.empty { display: none; }
+  </style>
+</head>
+<body>${acta.innerHTML}</body>
+</html>`;
+      const blob = new Blob(["\ufeff", html], { type: "application/msword;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `${sanitizeFileName(`${title}-${interno}`)}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    const loadFromSession = () => {
+      try {
+        const rawDraft = window.sessionStorage.getItem("actaConsejoDraft");
+        return rawDraft ? JSON.parse(rawDraft) : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const loadRecord = async () => {
+      const requestedRowNumber = Number(new URLSearchParams(window.location.search).get("fila"));
+      const draft = loadFromSession();
+
+      if (requestedRowNumber) {
+        try {
+          const response = await fetch(apiEndpoint);
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "No se pudo consultar la hoja consejo.");
+          }
+
+          const index = (data.rowNumbers || []).findIndex((rowNumber) => Number(rowNumber) === requestedRowNumber);
+          if (index >= 0) {
+            record = {
+              headers: data.headers || [],
+              row: data.rows[index] || [],
+            };
+            await loadAutoridadConfigurada();
+            statusNode.textContent = `Fila ${requestedRowNumber} cargada desde Sheets.`;
+            fillActa();
+            return;
+          }
+        } catch (error) {
+          statusNode.textContent = `${error.message} Se usaran los datos temporales.`;
+        }
+      }
+
+      if (draft?.headers?.length && draft?.row?.length) {
+        record = { headers: draft.headers, row: draft.row };
+        await loadAutoridadConfigurada();
+        statusNode.textContent = "Acta cargada con los datos seleccionados.";
+        fillActa();
+        return;
+      }
+
+      await loadAutoridadConfigurada();
+      statusNode.textContent = "No se recibieron datos. Vuelva al Consejo y pulse Acta en una fila.";
+      fillActa();
+    };
+
+    printButton?.addEventListener("click", () => window.print());
+    downloadWordButton?.addEventListener("click", downloadWord);
+    loadRecord();
+  </script>
+</body>
+</html>
