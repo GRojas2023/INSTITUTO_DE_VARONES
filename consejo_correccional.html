@@ -2299,7 +2299,6 @@
           throw new Error(data.error || "No se pudo guardar el registro.");
         }
 
-        tableSearch.value = "";
         renderApiRows(data);
         editingRowNumber = null;
         setModalOpen(false);
