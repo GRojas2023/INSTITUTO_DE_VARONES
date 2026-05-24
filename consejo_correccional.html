@@ -576,7 +576,7 @@
 
     .settings-grid-row {
       display: grid;
-      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      grid-template-columns: repeat(3, minmax(120px, 1fr));
       gap: 8px;
     }
 
@@ -1317,12 +1317,12 @@
         </div>
         <div class="modal-body">
           <div class="settings-layout">
-            <div class="settings-grid" id="consejo-settings-grid" aria-label="Rango Configuracion C1:F10"></div>
+            <div class="settings-grid" id="consejo-settings-grid" aria-label="Rango Configuracion C1:E10"></div>
             <span class="form-status" id="consejo-settings-status"></span>
           </div>
         </div>
         <div class="modal-footer">
-          <span class="form-status">Rango: Configuracion!C1:F10</span>
+          <span class="form-status">Rango: Configuracion!C1:E10</span>
           <div class="header-buttons">
             <button class="button" id="cancel-consejo-settings" type="button">Cancelar</button>
             <button class="button primary" id="save-consejo-settings" type="submit">Guardar</button>
@@ -1665,7 +1665,7 @@
         const row = document.createElement("div");
         row.className = "settings-grid-row";
 
-        Array.from({ length: 4 }, (_, columnIndex) => {
+        Array.from({ length: 3 }, (_, columnIndex) => {
           const input = document.createElement("input");
           const columnLetter = String.fromCharCode(67 + columnIndex);
           input.type = "text";
@@ -1703,7 +1703,7 @@
 
     const readConsejoSettingsGrid = () => (
       Array.from({ length: 10 }, (_, rowIndex) => (
-        Array.from({ length: 4 }, (_, columnIndex) => {
+        Array.from({ length: 3 }, (_, columnIndex) => {
           const input = consejoSettingsForm?.querySelector(`[name="config-${rowIndex}-${columnIndex}"]`);
           return input?.value?.trim() || "";
         })
