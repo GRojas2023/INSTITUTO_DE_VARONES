@@ -10,7 +10,7 @@ const SPREADSHEET_ID = "1DuK6GHozJGHSUQ7TVDIKODDm5XJnNpq9k9lheHWLvHE";
 const SHEET_RANGE = "consejo";
 const CONFIG_TRAMITES_RANGE = "Configuracion!A:A";
 const CONFIG_CONSEJO_RANGE = "Configuracion!C1:E10";
-const CONFIG_CEIP_RANGE = "Configuracion!H1:K10";
+const CONFIG_CEIP_RANGE = "Configuracion!H1:J10";
 const INTERNOS_RANGE = "internos";
 const SHEET_ID = 0;
 const CREDENTIALS_PATH = path.join(ROOT, "credenciales.json");
@@ -278,7 +278,7 @@ const getConfigCentroEvaluacionProcesados = async (forceRefresh = false) => {
 
   const values = await getSheetValues(CONFIG_CEIP_RANGE);
   const rows = Array.from({ length: 10 }, (_, rowIndex) => (
-    Array.from({ length: 4 }, (_, columnIndex) => String(values[rowIndex]?.[columnIndex] || ""))
+    Array.from({ length: 3 }, (_, columnIndex) => String(values[rowIndex]?.[columnIndex] || ""))
   ));
 
   configCeipCache = {
@@ -300,7 +300,7 @@ const updateConfigCentroEvaluacionProcesados = async (rows) => {
 
   const token = await getAccessToken();
   const values = Array.from({ length: 10 }, (_, rowIndex) => (
-    Array.from({ length: 4 }, (_, columnIndex) => String(rows[rowIndex]?.[columnIndex] || ""))
+    Array.from({ length: 3 }, (_, columnIndex) => String(rows[rowIndex]?.[columnIndex] || ""))
   ));
   const url = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(CONFIG_CEIP_RANGE)}`);
   url.searchParams.set("valueInputOption", "USER_ENTERED");
