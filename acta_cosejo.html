@@ -186,9 +186,7 @@
 
       <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Seguridad Interna"><span style="font-size:14px"><strong>DIVISION SEGURIDAD INTERNA:</strong> <span data-area="Seguridad Interna"></span></span></p>
 
-      <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Salud Mental"><span style="font-size:14px"><strong>SERVICIO DE SALUD MENTAL:</strong> <span data-area="Salud Mental"></span></span></p>
-
-      <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Asistencia Medica"><span style="font-size:14px"><strong>SERVICIO ASISTENCIA MEDICA:</strong> <span data-area="Asistencia Medica"></span></span></p>
+      <p class="area-paragraph" style="text-align:justify" data-area-wrapper="AsistenciaMedicaMerged"><span style="font-size:14px"><strong>DIVISION ASISTENCIA MEDICA:</strong> <span data-computed="asistenciaMedicaMerged"></span></span></p>
 
       <p class="area-paragraph" style="text-align:justify" data-area-wrapper="Trabajo"><span style="font-size:14px"><strong>DIVISION TRABAJO:</strong> <span data-area="Trabajo"></span></span></p>
 
@@ -343,6 +341,11 @@
         return `En esta oportunidad se trato lo solicitado por ${enviadoA}, mediante expediente ${expediente}, respecto al ${tramite} del interno ${getInternoConLpu()}.`;
       },
       conclusiones: () => getValue("Contestacion o Redirigido") || `En consecuencia, y en concordancia con las areas tecnicas intervinientes, se deja constancia de lo tratado respecto del tramite solicitado para el interno ${getInternoConLpu()}.`,
+      asistenciaMedicaMerged: () => {
+        const medica = getValue("Asistencia Medica");
+        const mental = getValue("Salud Mental");
+        return [medica, mental].filter(Boolean).join(". ");
+      },
     };
 
     const fillActa = () => {
@@ -353,6 +356,11 @@
       document.querySelectorAll("[data-computed]").forEach((node) => {
         const resolver = computedValues[node.dataset.computed];
         node.textContent = resolver ? resolver() : "";
+
+        const wrapper = node.closest("[data-area-wrapper]");
+        if (wrapper) {
+          wrapper.classList.toggle("empty", !node.textContent);
+        }
       });
 
       document.querySelectorAll("[data-area]").forEach((node) => {
