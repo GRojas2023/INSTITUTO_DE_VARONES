@@ -411,10 +411,7 @@
         const response = await fetch(summaryEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            datos,
-            acta: document.querySelector(".acta-body")?.innerText || "",
-          }),
+          body: JSON.stringify({ datos }),
         });
         const data = await response.json();
 

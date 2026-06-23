@@ -1,5 +1,7 @@
 ﻿const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+const MAX_FIELD_CHARS = 1200;
+const MAX_INPUT_CHARS = 9000;
 
 const generarResumenActaConGroq = async ({ datos = [], acta = "" } = {}) => {
   const apiKey = process.env.GROQ_API_KEY;
@@ -11,14 +13,26 @@ const generarResumenActaConGroq = async ({ datos = [], acta = "" } = {}) => {
     ? datos
       .map(({ campo, valor }) => {
         const nombre = String(campo || "").trim();
-        const contenido = String(valor || "").trim();
-        return nombre && contenido ? `${nombre}: ${contenido}` : "";
+        const contenido = String(valor || "")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        if (!nombre || !contenido) return "";
+
+        const recortado = contenido.length > MAX_FIELD_CHARS
+          ? `${contenido.slice(0, MAX_FIELD_CHARS)}...`
+          : contenido;
+
+        return `${nombre}: ${recortado}`;
       })
       .filter(Boolean)
       .join("\n")
     : "";
 
-  const contenido = [campos, String(acta || "").trim()].filter(Boolean).join("\n\nActa actual:\n");
+  const contenidoBase = campos || String(acta || "").replace(/\s+/g, " ").trim();
+  const contenido = contenidoBase.length > MAX_INPUT_CHARS
+    ? `${contenidoBase.slice(0, MAX_INPUT_CHARS)}...`
+    : contenidoBase;
   if (!contenido) {
     throw new Error("No hay informacion cargada para resumir.");
   }
@@ -32,7 +46,7 @@ const generarResumenActaConGroq = async ({ datos = [], acta = "" } = {}) => {
     body: JSON.stringify({
       model: GROQ_MODEL,
       temperature: 0.2,
-      max_tokens: 500,
+      max_tokens: 350,
       messages: [
         {
           role: "system",
