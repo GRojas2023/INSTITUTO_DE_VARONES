@@ -164,6 +164,7 @@
     </div>
     <div class="toolbar-actions">
       <a class="button secondary" href="consejo_correccional.html">Volver</a>
+      <button type="button" id="generate-summary-button">Generar resumen</button>
       <button type="button" id="download-word-button">Descargar Word</button>
       <button type="button" id="print-button">Imprimir</button>
     </div>
@@ -204,6 +205,7 @@
     const statusNode = document.querySelector("#load-status");
     const printButton = document.querySelector("#print-button");
     const downloadWordButton = document.querySelector("#download-word-button");
+    const generateSummaryButton = document.querySelector("#generate-summary-button");
     const apiEndpoint = window.location.protocol === "file:"
       ? "http://127.0.0.1:8780/api/consejo"
       : "/api/consejo";
@@ -213,6 +215,9 @@
     const ceipSettingsEndpoint = window.location.protocol === "file:"
       ? "http://127.0.0.1:8780/api/config/centro-evaluacion-procesados"
       : "/api/config/centro-evaluacion-procesados";
+    const summaryEndpoint = window.location.protocol === "file:"
+      ? "http://127.0.0.1:8780/api/groq/resumen-acta"
+      : "/api/groq/resumen-acta";
 
     const normalizeKey = (value) => String(value || "")
       .toLowerCase()
@@ -371,6 +376,62 @@
       });
     };
 
+
+    const collectRecordDataForSummary = () => record.headers
+      .map((header, index) => ({
+        campo: String(header || "").trim(),
+        valor: String(record.row[index] || "").trim(),
+      }))
+      .filter(({ campo, valor }) => campo && valor);
+
+    const setConclusionText = (value) => {
+      const index = record.headers.findIndex((header) => normalizeKey(header) === normalizeKey("Contestacion o Redirigido"));
+      if (index >= 0) {
+        record.row[index] = value;
+      } else {
+        record.headers.push("Contestacion o Redirigido");
+        record.row.push(value);
+      }
+      fillActa();
+    };
+
+    const generateSummary = async () => {
+      const datos = collectRecordDataForSummary();
+      if (!datos.length) {
+        statusNode.textContent = "No hay informacion cargada para resumir.";
+        return;
+      }
+
+      const previousText = generateSummaryButton?.textContent || "Generar resumen";
+      generateSummaryButton.disabled = true;
+      generateSummaryButton.textContent = "Generando...";
+      statusNode.textContent = "Generando resumen con Groq...";
+
+      try {
+        const response = await fetch(summaryEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            datos,
+            acta: document.querySelector(".acta-body")?.innerText || "",
+          }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "No se pudo generar el resumen.");
+        }
+
+        setConclusionText(data.resumen || "");
+        statusNode.textContent = "Resumen generado con Groq.";
+      } catch (error) {
+        statusNode.textContent = error.message;
+      } finally {
+        generateSummaryButton.disabled = false;
+        generateSummaryButton.textContent = previousText;
+      }
+    };
+
     const sanitizeFileName = (value) => String(value || "acta-consejo")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -474,7 +535,9 @@
 
     printButton?.addEventListener("click", () => window.print());
     downloadWordButton?.addEventListener("click", downloadWord);
+    generateSummaryButton?.addEventListener("click", generateSummary);
     loadRecord();
   </script>
 </body>
 </html>
+

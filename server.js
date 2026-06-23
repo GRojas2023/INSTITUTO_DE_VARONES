@@ -15,6 +15,8 @@ const INTERNOS_RANGE = "internos";
 const SHEET_ID = 0;
 const CREDENTIALS_PATH = path.join(ROOT, "credenciales.json");
 const SHEET_CACHE_MS = 60000;
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
 
 let tokenCache = null;
 let sheetCache = null;
@@ -433,6 +435,65 @@ const readJsonBody = (req) => new Promise((resolve, reject) => {
   });
 });
 
+
+const generarResumenActaConGroq = async ({ datos = [], acta = "" } = {}) => {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    throw new Error("Falta configurar GROQ_API_KEY en el servidor.");
+  }
+
+  const campos = Array.isArray(datos)
+    ? datos
+      .map(({ campo, valor }) => {
+        const nombre = String(campo || "").trim();
+        const contenido = String(valor || "").trim();
+        return nombre && contenido ? `${nombre}: ${contenido}` : "";
+      })
+      .filter(Boolean)
+      .join("\n")
+    : "";
+
+  const contenido = [campos, String(acta || "").trim()].filter(Boolean).join("\n\nActa actual:\n");
+  if (!contenido) {
+    throw new Error("No hay informacion cargada para resumir.");
+  }
+
+  const response = await fetch(GROQ_API_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      temperature: 0.2,
+      max_tokens: 500,
+      messages: [
+        {
+          role: "system",
+          content: "Redacta resumenes institucionales en espanol rioplatense, con tono formal, claro y juridico-administrativo. No inventes datos.",
+        },
+        {
+          role: "user",
+          content: `Con la informacion siguiente, redacta un resumen breve para incorporar en las conclusiones generales del acta. Debe sintetizar los datos relevantes de todas las areas, mantener nombres, LPU, expediente y tramite cuando existan, y no agregar informacion que no este en el texto.\n\n${contenido}`,
+        },
+      ],
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error?.message || `Groq error: ${response.status}`);
+  }
+
+  const resumen = String(data.choices?.[0]?.message?.content || "").trim();
+  if (!resumen) {
+    throw new Error("Groq no devolvio un resumen.");
+  }
+
+  return { resumen, model: GROQ_MODEL };
+};
+
 const insertConsejoRow = async (values) => {
   if (!Array.isArray(values) || !values.some((value) => String(value || "").trim() !== "")) {
     throw new Error("Completa al menos un campo antes de guardar.");
@@ -611,6 +672,16 @@ const server = http.createServer(async (req, res) => {
       "Access-Control-Allow-Headers": "Content-Type",
     });
     res.end();
+    return;
+  }
+
+  if (req.url.startsWith("/api/groq/resumen-acta") && req.method === "POST") {
+    try {
+      const body = await readJsonBody(req);
+      sendJson(res, 200, await generarResumenActaConGroq(body));
+    } catch (error) {
+      sendJson(res, 500, { error: error.message });
+    }
     return;
   }
 
