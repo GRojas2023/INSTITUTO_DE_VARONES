@@ -1,4 +1,4 @@
-const { findInternoByLpu } = require("./_lib/sheets");
+const { findInternoByLpu, getInternosRows } = require("./_lib/sheets");
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -15,7 +15,11 @@ module.exports = async function handler(req, res) {
 
   try {
     const lpu = req.query.lpu || "";
-    return res.status(200).json(await findInternoByLpu(lpu));
+    if (lpu) {
+      return res.status(200).json(await findInternoByLpu(lpu));
+    }
+    // Sin lpu: devolver todos los internos
+    return res.status(200).json(await getInternosRows());
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

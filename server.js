@@ -1815,14 +1815,6 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.url.startsWith("/api/internos") && req.method === "GET") {
-    try {
-      sendJson(res, 200, await getInternosRows());
-    } catch (error) {
-      sendJson(res, 500, { error: error.message });
-    }
-    return;
-  }
 
   if (req.url.startsWith("/api/personal-complejo") && req.method === "GET") {
     try {
@@ -1845,7 +1837,12 @@ const server = http.createServer(async (req, res) => {
   if (req.url.startsWith("/api/interno") && req.method === "GET") {
     try {
       const url = new URL(req.url, `http://${HOST}:${PORT}`);
-      sendJson(res, 200, await findInternoByLpu(url.searchParams.get("lpu")));
+      const lpu = url.searchParams.get("lpu") || "";
+      if (lpu) {
+        sendJson(res, 200, await findInternoByLpu(lpu));
+      } else {
+        sendJson(res, 200, await getInternosRows());
+      }
     } catch (error) {
       sendJson(res, 500, { error: error.message });
     }
