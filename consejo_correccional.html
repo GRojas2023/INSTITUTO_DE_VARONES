@@ -3217,7 +3217,7 @@
       const params = new URLSearchParams({
         tqx: `out:json;responseHandler:${sancionesSheetsCallback}`,
         sheet: sancionesSheetName,
-        range: "A:Q",
+        range: "A:S",
       });
 
       script.src = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?${params}`;

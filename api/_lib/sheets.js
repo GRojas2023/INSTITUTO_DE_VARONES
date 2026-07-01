@@ -5,8 +5,10 @@ const SHEET_RANGE = "consejo";
 const CONFIG_TRAMITES_RANGE = "Configuracion!A:A";
 const CONFIG_CONSEJO_RANGE = "Configuracion!C1:F10";
 const CONFIG_CEIP_RANGE = "Configuracion!H1:K10";
+const CONFIG_SANCIONES_ARTICULOS_RANGE = "Configuracion!N:P";
 const INTERNOS_RANGE = "internos";
 const PERSONAL_COMPLEJO_RANGE = "PERSONAL_COMPLEJO!E:F";
+const SANCIONES_RANGE = "'SANCIONES_RESUELTA'!A:S";
 const SHEET_ID = 0;
 const ARCHIVO_SHEET = "archivo";
 const ARCHIVO_RANGE = "'archivo'!A:C";
@@ -16,6 +18,27 @@ const PARTE_PERSONAL_SHEET = "PERSONAL";
 const PARTE_NOVEDADES_SHEET = "NOVEDADES";
 const PARTE_ALOJAMIENTO_SHEET = "ALOJAMIENTO";
 const PARTE_OBSERVACIONES_SHEET = "OBSERVACIONES";
+const SANCIONES_HEADERS = [
+  "EXPEDIENTE",
+  "ACTA N.",
+  "INTERNO",
+  "LPU",
+  "FECHA DEL HECHO",
+  "DESCRIPCION DEL HECHO",
+  "TIPO",
+  "ARTICULOS",
+  "ORDEN INTERNA",
+  "FECHA ORDEN INTERNA",
+  "SANCION",
+  "CONDUCTA INICIO",
+  "CONCEPTO INICIO",
+  "FASE INICIO",
+  "CRITERIO CONDUCTA",
+  "CRITERIO CONCEPTO",
+  "CONDUCTA FINALIZA",
+  "CONCEPTO FINALIZA",
+  "FASE FINALIZA",
+];
 
 const base64Url = (value) =>
   Buffer.from(value)
@@ -87,6 +110,21 @@ const getSheetValues = async (range) => {
 
   const data = await response.json();
   return data.values || [];
+};
+
+const rowsFromSheetValues = (values) => {
+  const headers = values[0] || [];
+  const rowPairs = values
+    .slice(1)
+    .map((row, index) => ({ row, rowNumber: index + 2 }))
+    .filter(({ row }) => row.some((cell) => String(cell || "").trim() !== ""));
+
+  return {
+    headers,
+    rows: rowPairs.map(({ row }) => row),
+    rowNumbers: rowPairs.map(({ rowNumber }) => rowNumber),
+    cachedAt: new Date().toISOString(),
+  };
 };
 
 const quotedSheetRange = (sheetTitle, columns = "A:Z") => `'${String(sheetTitle).replace(/'/g, "''")}'!${columns}`;
@@ -193,6 +231,29 @@ const ensureSheetExists = async (sheetTitle) => {
       throw new Error(`Google Sheets add sheet error: ${response.status} ${text}`);
     }
   }
+};
+
+const getSheetIdByTitle = async (sheetTitle) => {
+  const token = await getAccessToken();
+  const url = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}`);
+  url.searchParams.set("fields", "sheets.properties");
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Google Sheets metadata error: ${response.status} ${text}`);
+  }
+
+  const data = await response.json();
+  const sheet = (data.sheets || []).find((item) => item.properties?.title === sheetTitle);
+  if (!sheet) {
+    throw new Error(`No se encontro la hoja ${sheetTitle}.`);
+  }
+
+  return sheet.properties.sheetId;
 };
 const normalizeKey = (value) =>
   String(value || "")
@@ -403,6 +464,169 @@ const getPersonalComplejoOptions = async () => {
   return {
     agentes: uniqueSortedValues(rows.map((row) => row[0])),
     funciones: uniqueSortedValues(rows.map((row) => row[1])),
+    cachedAt: new Date().toISOString(),
+  };
+};
+
+// Sanciones
+
+const getSancionesRows = async () => {
+  const values = await getSheetValues(SANCIONES_RANGE);
+  const data = rowsFromSheetValues(values);
+  const headers = SANCIONES_HEADERS.map((header, index) => data.headers[index] || header);
+  const rows = data.rows.map((row) => {
+    if (row.length <= 17) {
+      return [
+        ...row.slice(0, 9),
+        "",
+        "",
+        ...row.slice(9),
+      ];
+    }
+    return row;
+  });
+
+  return { ...data, headers, rows };
+};
+
+const normalizeSancionValues = (values) => {
+  const rowValues = Array.from({ length: 19 }, (_, index) => String(values?.[index] || "").trim());
+  if (!rowValues.some(Boolean)) {
+    throw new Error("Completa al menos un campo antes de guardar.");
+  }
+  return rowValues;
+};
+
+const insertSancionRow = async (values) => {
+  const rowValues = normalizeSancionValues(values);
+  const token = await getAccessToken();
+  const sheetId = await getSheetIdByTitle("SANCIONES_RESUELTA");
+  const batchUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`);
+  const insertResponse = await fetch(batchUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      requests: [{
+        insertDimension: {
+          range: {
+            sheetId,
+            dimension: "ROWS",
+            startIndex: 1,
+            endIndex: 2,
+          },
+          inheritFromBefore: false,
+        },
+      }],
+    }),
+  });
+
+  if (!insertResponse.ok) {
+    const text = await insertResponse.text();
+    throw new Error(`Google Sheets insert error: ${insertResponse.status} ${text}`);
+  }
+
+  const valuesUrl = new URL(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent("'SANCIONES_RESUELTA'!A2:S2")}`
+  );
+  valuesUrl.searchParams.set("valueInputOption", "USER_ENTERED");
+
+  const updateResponse = await fetch(valuesUrl, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ values: [rowValues] }),
+  });
+
+  if (!updateResponse.ok) {
+    const text = await updateResponse.text();
+    throw new Error(`Google Sheets update error: ${updateResponse.status} ${text}`);
+  }
+
+  return getSancionesRows();
+};
+
+const updateSancionRow = async (rowNumber, values) => {
+  const targetRow = Number(rowNumber);
+  if (!Number.isInteger(targetRow) || targetRow < 2) {
+    throw new Error("Fila invalida para editar.");
+  }
+
+  const rowValues = normalizeSancionValues(values);
+  const token = await getAccessToken();
+  const valuesUrl = new URL(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(`'SANCIONES_RESUELTA'!A${targetRow}:S${targetRow}`)}`
+  );
+  valuesUrl.searchParams.set("valueInputOption", "USER_ENTERED");
+
+  const response = await fetch(valuesUrl, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ values: [rowValues] }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Google Sheets update error: ${response.status} ${text}`);
+  }
+
+  return getSancionesRows();
+};
+
+const deleteSancionRow = async (rowNumber) => {
+  const targetRow = Number(rowNumber);
+  if (!Number.isInteger(targetRow) || targetRow < 2) {
+    throw new Error("Fila invalida para eliminar.");
+  }
+
+  const token = await getAccessToken();
+  const sheetId = await getSheetIdByTitle("SANCIONES_RESUELTA");
+  const batchUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`);
+  const response = await fetch(batchUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      requests: [{
+        deleteDimension: {
+          range: {
+            sheetId,
+            dimension: "ROWS",
+            startIndex: targetRow - 1,
+            endIndex: targetRow,
+          },
+        },
+      }],
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Google Sheets delete error: ${response.status} ${text}`);
+  }
+
+  return getSancionesRows();
+};
+
+const getSancionesArticleOptions = async () => {
+  const values = await getSheetValues(CONFIG_SANCIONES_ARTICULOS_RANGE);
+  const normalizeOptions = (columnIndex) => [...new Set(values
+    .map((row) => String(row[columnIndex] || "").trim())
+    .filter(Boolean))];
+
+  return {
+    leve: normalizeOptions(0),
+    media: normalizeOptions(1),
+    grave: normalizeOptions(2),
     cachedAt: new Date().toISOString(),
   };
 };
@@ -922,6 +1146,11 @@ module.exports = {
   deleteConsejoRow,
   getPersonalComplejoOptions,
   findInternoByLpu,
+  getSancionesRows,
+  insertSancionRow,
+  updateSancionRow,
+  deleteSancionRow,
+  getSancionesArticleOptions,
   getTramites,
   appendTramite,
   updateTramites,
