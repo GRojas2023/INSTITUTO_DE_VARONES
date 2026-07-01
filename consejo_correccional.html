@@ -1754,6 +1754,9 @@
     let sancionInternosLoadPromise = null;
     let sancionArticulosByTipo = { LEVE: [], MEDIA: [], GRAVE: [] };
     let sancionCalificacionItems = [];
+    let consejoInternos = [];
+    let consejoInternosLoadPromise = null;
+    let consejoInternoSuggestionsEl = null;
 
     sidebarToggle?.addEventListener("click", () => {
       const isCollapsed = shell.classList.toggle("sidebar-collapsed");
@@ -1779,7 +1782,6 @@
     const getHeaderKey = (header) => normalizeSearchText(header).replace(/[^a-z0-9]/g, "");
 
     const isLockedInternoHeader = (header) => [
-      "interno",
       "situacion",
       "situacionlegal",
       "alojado",
@@ -1787,6 +1789,8 @@
     ].includes(getHeaderKey(header));
 
     const isLpuHeader = (header) => ["lpu", "lpun", "lpunro", "lpunumero"].includes(getHeaderKey(header));
+
+    const isInternoHeader = (header) => ["interno", "apellidoynombre"].includes(getHeaderKey(header));
 
     const isIntervieneHeader = (header) => getHeaderKey(header) === "interviene";
 
@@ -1815,57 +1819,127 @@
       }
     };
 
-    const clearInternoFields = () => {
-      fillInputByHeader(["INTERNO"], "");
+    const clearConsejoInternoFields = () => {
+      fillInputByHeader(["L.P.U.", "L.P.U", "LPU", "L.P.U. N°"], "");
       fillInputByHeader(["SITUACION", "SITUACION LEGAL"], "");
       fillInputByHeader(["ALOJADO", "ALOJAMIENTO"], "");
     };
 
-    const lookupInternoByLpu = async (lpu) => {
-      const nextLpu = String(lpu || "").trim();
-      if (!nextLpu) {
-        clearInternoFields();
+    const loadConsejoInternos = async () => {
+      if (consejoInternos.length) return;
+      if (consejoInternosLoadPromise) return consejoInternosLoadPromise;
+
+      consejoInternosLoadPromise = fetch(internosEndpoint)
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || "No se pudo cargar la hoja internos.");
+          }
+
+          const headers = data.headers || [];
+          const internoIdx = headers.findIndex((h) => [
+            "interno", "apellidoynombre", "nombre",
+          ].includes(getHeaderKey(h)));
+          const lpuIdx = headers.findIndex((h) => [
+            "lpu", "lpun", "lpuno",
+          ].includes(getHeaderKey(h)));
+          const alojIdx = headers.findIndex((h) => [
+            "alojamiento", "alojado",
+          ].includes(getHeaderKey(h)));
+          const sitIdx = headers.findIndex((h) => [
+            "situacionlegal", "situacion",
+          ].includes(getHeaderKey(h)));
+
+          consejoInternos = (data.rows || [])
+            .map((row) => ({
+              interno: String(row[internoIdx >= 0 ? internoIdx : 2] || "").trim(),
+              lpu: String(row[lpuIdx >= 0 ? lpuIdx : 3] || "").trim(),
+              alojamiento: alojIdx >= 0 ? String(row[alojIdx] || "").trim() : "",
+              situacion: sitIdx >= 0 ? String(row[sitIdx] || "").trim() : "",
+            }))
+            .filter((item) => item.interno);
+        })
+        .finally(() => {
+          consejoInternosLoadPromise = null;
+        });
+
+      return consejoInternosLoadPromise;
+    };
+
+    const hideConsejoInternoSuggestions = () => {
+      if (!consejoInternoSuggestionsEl) return;
+      consejoInternoSuggestionsEl.hidden = true;
+      consejoInternoSuggestionsEl.innerHTML = "";
+    };
+
+    const selectConsejoInterno = (item) => {
+      const internoInput = findNewRecordInput(["INTERNO", "APELLIDO Y NOMBRE"]);
+      if (internoInput) {
+        internoInput.value = item.interno;
+      }
+      fillInputByHeader(["L.P.U.", "L.P.U", "LPU", "L.P.U. N°"], item.lpu);
+      fillInputByHeader(["SITUACION", "SITUACION LEGAL"], item.situacion);
+      fillInputByHeader(["ALOJADO", "ALOJAMIENTO"], item.alojamiento);
+      hideConsejoInternoSuggestions();
+      newRecordStatus.textContent = "";
+    };
+
+    const renderConsejoInternoSuggestions = (inputEl) => {
+      if (!consejoInternoSuggestionsEl || !inputEl) return;
+
+      const query = normalizeSearchText(inputEl.value).trim();
+      if (!query) {
+        hideConsejoInternoSuggestions();
         return;
       }
 
-      newRecordStatus.textContent = "Buscando interno...";
+      const matches = consejoInternos
+        .filter((item) => normalizeSearchText(item.interno).includes(query))
+        .slice(0, 15);
 
+      consejoInternoSuggestionsEl.innerHTML = "";
+      if (!matches.length) {
+        hideConsejoInternoSuggestions();
+        return;
+      }
+
+      matches.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "autocomplete-option";
+        button.textContent = item.interno;
+        if (item.lpu) {
+          const lpuSpan = document.createElement("span");
+          lpuSpan.textContent = `LPU ${item.lpu}`;
+          button.appendChild(lpuSpan);
+        }
+        button.addEventListener("mousedown", (event) => {
+          event.preventDefault();
+          selectConsejoInterno(item);
+        });
+        consejoInternoSuggestionsEl.appendChild(button);
+      });
+
+      consejoInternoSuggestionsEl.hidden = false;
+    };
+
+    const showConsejoInternoSuggestions = async (inputEl) => {
       try {
-        const url = new URL(internoEndpoint, window.location.href);
-        url.searchParams.set("lpu", nextLpu);
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "No se pudo buscar el interno.");
-        }
-
-        if (!data.found) {
-          clearInternoFields();
-          newRecordStatus.textContent = "No se encontro un interno con ese L.P.U.";
-          return;
-        }
-
-        fillInputByHeader(["INTERNO"], data.interno);
-        fillInputByHeader(["SITUACION", "SITUACION LEGAL"], data.situacionLegal);
-        fillInputByHeader(["ALOJADO", "ALOJAMIENTO"], data.alojamiento);
-        newRecordStatus.textContent = "";
+        await loadConsejoInternos();
+        renderConsejoInternoSuggestions(inputEl);
       } catch (error) {
-        clearInternoFields();
-        newRecordStatus.textContent = error.message;
+        if (newRecordStatus) {
+          newRecordStatus.textContent = error.message;
+        }
       }
     };
 
-    const attachLpuLookup = (input) => {
-      input.addEventListener("input", () => {
-        window.clearTimeout(internoLookupTimer);
-        internoLookupTimer = window.setTimeout(() => lookupInternoByLpu(input.value), 450);
-      });
-
-      input.addEventListener("blur", () => {
-        window.clearTimeout(internoLookupTimer);
-        lookupInternoByLpu(input.value);
-      });
+    const updateConsejoLpu = (inputEl) => {
+      const requested = normalizeSearchText(inputEl?.value || "").trim();
+      const match = consejoInternos.find((item) => normalizeSearchText(item.interno).trim() === requested);
+      fillInputByHeader(["L.P.U.", "L.P.U", "LPU", "L.P.U. N°"], match?.lpu || "");
+      fillInputByHeader(["SITUACION", "SITUACION LEGAL"], match?.situacion || "");
+      fillInputByHeader(["ALOJADO", "ALOJAMIENTO"], match?.alojamiento || "");
     };
 
     const loadTramites = async () => {
@@ -2222,6 +2296,7 @@
       if (!newRecordFields) return;
 
       newRecordFields.innerHTML = "";
+      consejoInternoSuggestionsEl = null;
       tableHeaders.forEach((header, index) => {
         const field = document.createElement("div");
         const label = document.createElement("label");
@@ -2260,11 +2335,39 @@
 
         if (isLockedInternoHeader(header)) {
           input.readOnly = true;
-          input.title = "Este campo se completa automaticamente al buscar por L.P.U.";
+          input.title = "Este campo se completa automaticamente al seleccionar un interno.";
         }
 
         if (isLpuHeader(header)) {
-          attachLpuLookup(input);
+          input.readOnly = true;
+          input.title = "Este campo se completa automaticamente al seleccionar un interno.";
+        }
+
+        if (isInternoHeader(header)) {
+          field.classList.add("autocomplete-field");
+          const suggestionsDiv = document.createElement("div");
+          suggestionsDiv.className = "autocomplete-options";
+          suggestionsDiv.id = "consejo-interno-suggestions";
+          suggestionsDiv.hidden = true;
+          consejoInternoSuggestionsEl = suggestionsDiv;
+
+          input.addEventListener("input", () => {
+            updateConsejoLpu(input);
+            showConsejoInternoSuggestions(input);
+          });
+          input.addEventListener("focus", () => showConsejoInternoSuggestions(input));
+          input.addEventListener("blur", () => {
+            updateConsejoLpu(input);
+          });
+          input.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+              hideConsejoInternoSuggestions();
+            }
+          });
+
+          field.append(label, input, suggestionsDiv);
+          newRecordFields.appendChild(field);
+          return;
         }
 
         field.append(label, input);
@@ -3061,6 +3164,7 @@
     document.addEventListener("pointerdown", (event) => {
       if (!event.target.closest?.(".autocomplete-field")) {
         hideSancionInternoSuggestions();
+        hideConsejoInternoSuggestions();
       }
     });
     document.addEventListener("pointerdown", keepOneSancionMultiSelectOpen);
