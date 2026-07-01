@@ -26,6 +26,7 @@ const CONFIG_TRAMITES_RANGE = "Configuracion!A:A";
 const CONFIG_CONSEJO_RANGE = "Configuracion!C1:E10";
 const CONFIG_CEIP_RANGE = "Configuracion!H1:J10";
 const CONFIG_SANCIONES_ARTICULOS_RANGE = "Configuracion!N:P";
+const CONFIG_SANCIONES_CALIFICACIONES_RANGE = "Configuracion!S:S";
 const INTERNOS_RANGE = "internos";
 const PERSONAL_COMPLEJO_RANGE = "PERSONAL_COMPLEJO!E:F";
 const ALOJAMIENTO_RANGE = "ALOJAMIENTO";
@@ -66,6 +67,7 @@ let tramitesCache = null;
 let configConsejoCache = null;
 let configCeipCache = null;
 let configSancionesArticulosCache = null;
+let configSancionesCalificacionesCache = null;
 let internosCache = null;
 let personalComplejoCache = null;
 let alojamientoCache = null;
@@ -228,6 +230,27 @@ const getSancionesArticleOptions = async (forceRefresh = false) => {
   };
 
   return configSancionesArticulosCache.data;
+};
+
+const getSancionesCalificacionOptions = async (forceRefresh = false) => {
+  if (!forceRefresh && configSancionesCalificacionesCache && configSancionesCalificacionesCache.expiresAt > Date.now()) {
+    return configSancionesCalificacionesCache.data;
+  }
+
+  const values = await getSheetValues(CONFIG_SANCIONES_CALIFICACIONES_RANGE);
+  const calificaciones = [...new Set(values
+    .map((row) => String(row[0] || "").trim())
+    .filter(Boolean))];
+
+  configSancionesCalificacionesCache = {
+    data: {
+      calificaciones,
+      cachedAt: new Date().toISOString(),
+    },
+    expiresAt: Date.now() + SHEET_CACHE_MS,
+  };
+
+  return configSancionesCalificacionesCache.data;
 };
 
 const getSheetIdByTitle = async (sheetTitle) => {
@@ -1650,6 +1673,15 @@ const server = http.createServer(async (req, res) => {
   if (req.url.startsWith("/api/config/sanciones-articulos") && req.method === "GET") {
     try {
       sendJson(res, 200, await getSancionesArticleOptions());
+    } catch (error) {
+      sendJson(res, 500, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.url.startsWith("/api/config/sanciones-calificaciones") && req.method === "GET") {
+    try {
+      sendJson(res, 200, await getSancionesCalificacionOptions());
     } catch (error) {
       sendJson(res, 500, { error: error.message });
     }

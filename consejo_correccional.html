@@ -1675,6 +1675,9 @@
     const sancionesArticulosEndpoint = window.location.protocol === "file:"
       ? "http://127.0.0.1:8780/api/config/sanciones-articulos"
       : "/api/config/sanciones-articulos";
+    const sancionesCalificacionesEndpoint = window.location.protocol === "file:"
+      ? "http://127.0.0.1:8780/api/config/sanciones-calificaciones"
+      : "/api/config/sanciones-calificaciones";
     const tramitesEndpoint = window.location.protocol === "file:"
       ? "http://127.0.0.1:8780/api/tramites"
       : "/api/tramites";
@@ -1693,6 +1696,7 @@
     let internoLookupTimer = null;
     let sancionInternos = [];
     let sancionArticulosByTipo = { LEVE: [], MEDIA: [], GRAVE: [] };
+    let sancionCalificacionItems = [];
 
     sidebarToggle?.addEventListener("click", () => {
       const isCollapsed = shell.classList.toggle("sidebar-collapsed");
@@ -2227,21 +2231,6 @@
       }
     };
 
-    const scoreOptions = [
-      ["", "Seleccionar"],
-      ["0", "CERO (00)"],
-      ["1", "UNO (01)"],
-      ["2", "DOS (02)"],
-      ["3", "TRES (03)"],
-      ["4", "CUATRO (04)"],
-      ["5", "CINCO (05)"],
-      ["6", "SEIS (06)"],
-      ["7", "SIETE (07)"],
-      ["8", "OCHO (08)"],
-      ["9", "NUEVE (09)"],
-      ["10", "DIEZ (10)"],
-    ];
-
     const faseOptions = [
       "",
       "Periodo de Observacion",
@@ -2304,6 +2293,42 @@
       const match = String(value || "").match(/\((\d{1,2})\)|\b(\d{1,2})\b/);
       return match ? String(Number(match[1] || match[2])) : "";
     };
+
+    const scoreNumberFromText = (value) => {
+      const score = scoreValueFromText(value);
+      return score === "" ? NaN : Number(score);
+    };
+
+    const getCalificacionOptionValue = (value) => {
+      const score = scoreValueFromText(value);
+      return score === "" ? String(value || "").trim() : score;
+    };
+
+    const renderSancionCalificacionOptions = () => {
+      const options = [
+        ["", "Seleccionar"],
+        ...sancionCalificacionItems.map((item) => [getCalificacionOptionValue(item), item]),
+      ];
+      fillSelectOptions(sancionConductaInicio, options);
+      fillSelectOptions(sancionConceptoInicio, options);
+    };
+
+    const setScoreSelectValue = (select, value) => {
+      if (!select) return;
+      const nextValue = getCalificacionOptionValue(value);
+      select.value = nextValue;
+      if (nextValue && select.value !== nextValue) {
+        const option = document.createElement("option");
+        option.value = nextValue;
+        option.textContent = value;
+        select.appendChild(option);
+        select.value = nextValue;
+      }
+    };
+
+    const findCalificacionByNumber = (number) => sancionCalificacionItems.find((item) => (
+      scoreNumberFromText(item) === number
+    )) || "";
 
     const sheetDateToInputDate = (value) => {
       const text = String(value || "").trim();
@@ -2428,6 +2453,20 @@
       renderArticuloOptions();
     };
 
+    const loadSancionCalificaciones = async () => {
+      if (sancionCalificacionItems.length) return;
+
+      const response = await fetch(sancionesCalificacionesEndpoint);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo cargar la configuracion de calificaciones.");
+      }
+
+      sancionCalificacionItems = data.calificaciones || [];
+      renderSancionCalificacionOptions();
+      updateSancionFinalScores();
+    };
+
     const updateSancionLpu = () => {
       const requested = normalizeSearchText(sancionInternoInput?.value || "").trim();
       const match = sancionInternos.find((item) => normalizeSearchText(item.interno).trim() === requested);
@@ -2443,20 +2482,26 @@
     };
 
     const updateSancionFinalScores = () => {
-      const conductaInicio = Number(sancionConductaInicio?.value);
-      const conceptoInicio = Number(sancionConceptoInicio?.value);
-      const criterioConducta = Number(sancionCriterioConducta?.value);
-      const criterioConcepto = Number(sancionCriterioConcepto?.value);
+      const conductaInicioValue = sancionConductaInicio?.value || "";
+      const conceptoInicioValue = sancionConceptoInicio?.value || "";
+      const criterioConductaValue = sancionCriterioConducta?.value || "";
+      const criterioConceptoValue = sancionCriterioConcepto?.value || "";
+      const conductaInicio = conductaInicioValue === "" ? NaN : Number(conductaInicioValue);
+      const conceptoInicio = conceptoInicioValue === "" ? NaN : Number(conceptoInicioValue);
+      const criterioConducta = criterioConductaValue === "" ? NaN : Number(criterioConductaValue);
+      const criterioConcepto = criterioConceptoValue === "" ? NaN : Number(criterioConceptoValue);
 
       if (sancionConductaFinaliza) {
+        const conductaFinal = conductaInicio - criterioConducta;
         sancionConductaFinaliza.value = Number.isFinite(conductaInicio) && Number.isFinite(criterioConducta)
-          ? String(conductaInicio - criterioConducta)
+          ? findCalificacionByNumber(conductaFinal) || String(conductaFinal)
           : "";
       }
 
       if (sancionConceptoFinaliza) {
+        const conceptoFinal = conceptoInicio - criterioConcepto;
         sancionConceptoFinaliza.value = Number.isFinite(conceptoInicio) && Number.isFinite(criterioConcepto)
-          ? String(conceptoInicio - criterioConcepto)
+          ? findCalificacionByNumber(conceptoFinal) || String(conceptoFinal)
           : "";
       }
     };
@@ -2491,7 +2536,7 @@
         }
         sancionRecordStatus.textContent = "Cargando opciones...";
         try {
-          await Promise.all([loadSancionInternos(), loadSancionArticulos()]);
+          await Promise.all([loadSancionInternos(), loadSancionArticulos(), loadSancionCalificaciones()]);
           sancionRecordStatus.textContent = "";
         } catch (error) {
           sancionRecordStatus.textContent = error.message;
@@ -2512,8 +2557,8 @@
       sancionRecordForm.querySelector('[name="ordenInterna"]').value = rowValues[8] || "";
       sancionRecordForm.querySelector('[name="fechaOrdenInterna"]').value = sheetDateToInputDate(rowValues[9]);
       sancionSancionSelect.value = rowValues[10] || "";
-      sancionConductaInicio.value = scoreValueFromText(rowValues[11]);
-      sancionConceptoInicio.value = scoreValueFromText(rowValues[12]);
+      setScoreSelectValue(sancionConductaInicio, rowValues[11]);
+      setScoreSelectValue(sancionConceptoInicio, rowValues[12]);
       sancionFaseInicio.value = rowValues[13] || "";
       sancionCriterioConducta.value = rowValues[14] || "";
       sancionCriterioConcepto.value = rowValues[15] || "";
@@ -2846,8 +2891,7 @@
 
     tableSearch?.addEventListener("input", applySearch);
 
-    fillSelectOptions(sancionConductaInicio, scoreOptions);
-    fillSelectOptions(sancionConceptoInicio, scoreOptions);
+    renderSancionCalificacionOptions();
     fillSelectOptions(sancionFaseInicio, faseOptions);
     fillSelectOptions(sancionFaseFinaliza, faseOptions);
     fillSelectOptions(sancionSancionSelect, sancionOptions);

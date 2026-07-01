@@ -4,6 +4,7 @@ const {
   getConfigCentroEvaluacionProcesados,
   updateConfigCentroEvaluacionProcesados,
   getSancionesArticleOptions,
+  getSancionesCalificacionOptions,
 } = require("../_lib/sheets");
 
 const getRouteName = (req) => {
@@ -52,6 +53,12 @@ module.exports = async function handler(req, res) {
     if (name === "sanciones-articulos") {
       if (req.method === "GET") {
         return res.status(200).json(await getSancionesArticleOptions());
+      }
+    }
+
+    if (name === "sanciones-calificaciones") {
+      if (req.method === "GET") {
+        return res.status(200).json(await getSancionesCalificacionOptions());
       }
     }
 

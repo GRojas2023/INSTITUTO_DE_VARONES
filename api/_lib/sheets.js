@@ -6,6 +6,7 @@ const CONFIG_TRAMITES_RANGE = "Configuracion!A:A";
 const CONFIG_CONSEJO_RANGE = "Configuracion!C1:F10";
 const CONFIG_CEIP_RANGE = "Configuracion!H1:K10";
 const CONFIG_SANCIONES_ARTICULOS_RANGE = "Configuracion!N:P";
+const CONFIG_SANCIONES_CALIFICACIONES_RANGE = "Configuracion!S:S";
 const INTERNOS_RANGE = "internos";
 const PERSONAL_COMPLEJO_RANGE = "PERSONAL_COMPLEJO!E:F";
 const SANCIONES_RANGE = "'SANCIONES_RESUELTA'!A:S";
@@ -631,6 +632,18 @@ const getSancionesArticleOptions = async () => {
   };
 };
 
+const getSancionesCalificacionOptions = async () => {
+  const values = await getSheetValues(CONFIG_SANCIONES_CALIFICACIONES_RANGE);
+  const calificaciones = [...new Set(values
+    .map((row) => String(row[0] || "").trim())
+    .filter(Boolean))];
+
+  return {
+    calificaciones,
+    cachedAt: new Date().toISOString(),
+  };
+};
+
 const findInternoByLpu = async (lpu) => {
   const requestedLpu = normalizeKey(lpu);
   if (!requestedLpu) {
@@ -1151,6 +1164,7 @@ module.exports = {
   updateSancionRow,
   deleteSancionRow,
   getSancionesArticleOptions,
+  getSancionesCalificacionOptions,
   getTramites,
   appendTramite,
   updateTramites,
