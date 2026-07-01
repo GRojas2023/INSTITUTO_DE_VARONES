@@ -93,6 +93,14 @@
       line-height: 1.45;
     }
 
+    .acta-body .center {
+      text-align: center;
+    }
+
+    .acta-body .red {
+      color: #ff0000;
+    }
+
     .status {
       color: var(--muted);
       font-size: 13px;
@@ -153,6 +161,24 @@
       ? "http://127.0.0.1:8780/api/sanciones"
       : "/api/sanciones";
 
+    const readJsonResponse = async (response, fallbackMessage) => {
+      const text = await response.text();
+      let data = {};
+
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        const preview = text.replace(/\s+/g, " ").trim().slice(0, 120);
+        throw new Error(`${fallbackMessage} La API no devolvio JSON (${response.status}). ${preview}`);
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || fallbackMessage);
+      }
+
+      return data;
+    };
+
     const headersFallback = [
       "EXPEDIENTE",
       "ACTA N.º",
@@ -206,11 +232,7 @@
       if (requestedRowNumber) {
         try {
           const response = await fetch(sancionesEndpoint);
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.error || "No se pudo consultar la hoja de sanciones.");
-          }
+          const data = await readJsonResponse(response, "No se pudo consultar la hoja de sanciones.");
 
           const index = (data.rowNumbers || []).findIndex((rowNumber) => Number(rowNumber) === requestedRowNumber);
           if (index >= 0) {
@@ -249,11 +271,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ values: record.row }),
       });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "No se pudo renderizar el acta.");
-      }
+      const data = await readJsonResponse(response, "No se pudo renderizar el acta.");
 
       actaTitle = data.title || actaTitle;
       actaBody.innerHTML = data.html || "<p>Acta sin contenido.</p>";
@@ -289,6 +307,8 @@
       font-size: 14px;
       line-height: 1.45;
     }
+    .center { text-align: center; }
+    .red { color: #ff0000; }
   </style>
 </head>
 <body>${acta.innerHTML}</body>

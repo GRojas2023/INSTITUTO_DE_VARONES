@@ -482,6 +482,60 @@
       grid-column: 1 / -1;
     }
 
+    .autocomplete-field {
+      position: relative;
+    }
+
+    .autocomplete-options {
+      position: absolute;
+      z-index: 40;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      max-height: 240px;
+      overflow: auto;
+      display: grid;
+      gap: 4px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--white);
+      box-shadow: 0 16px 38px rgb(15 23 40 / 18%);
+    }
+
+    .autocomplete-options[hidden] {
+      display: none;
+    }
+
+    .autocomplete-option {
+      min-height: 34px;
+      padding: 6px 8px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: #2d3340;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .autocomplete-option:hover,
+    .autocomplete-option:focus {
+      outline: 0;
+      background: #eef3fb;
+      color: var(--brand-dark);
+    }
+
+    .autocomplete-option span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
     .multi-select {
       position: relative;
       min-width: 0;
@@ -1367,9 +1421,10 @@
             <label for="sancion-acta">ACTA N.º</label>
             <input id="sancion-acta" name="acta" type="text" autocomplete="off">
           </div>
-          <div class="form-field">
+          <div class="form-field autocomplete-field">
             <label for="sancion-interno">INTERNO</label>
-            <input id="sancion-interno" name="interno" type="text" list="sancion-interno-options" autocomplete="off">
+            <input id="sancion-interno" name="interno" type="text" autocomplete="off">
+            <div class="autocomplete-options" id="sancion-interno-suggestions" hidden></div>
           </div>
           <div class="form-field">
             <label for="sancion-lpu">LPU</label>
@@ -1581,6 +1636,7 @@
     const sancionRecordStatus = document.querySelector("#sancion-record-status");
     const sancionInternoOptions = document.querySelector("#sancion-interno-options");
     const sancionInternoInput = document.querySelector("#sancion-interno");
+    const sancionInternoSuggestions = document.querySelector("#sancion-interno-suggestions");
     const sancionLpuInput = document.querySelector("#sancion-lpu");
     const sancionTipoOptions = document.querySelector("#sancion-tipo-options");
     const sancionTipoSummary = document.querySelector("#sancion-tipo-summary");
@@ -1695,6 +1751,7 @@
       : "/api/config/centro-evaluacion-procesados";
     let internoLookupTimer = null;
     let sancionInternos = [];
+    let sancionInternosLoadPromise = null;
     let sancionArticulosByTipo = { LEVE: [], MEDIA: [], GRAVE: [] };
     let sancionCalificacionItems = [];
 
@@ -2408,22 +2465,7 @@
       setMultiSummary(sancionArticulosSummary, getCheckedValues(sancionArticulosOptions));
     };
 
-    const loadSancionInternos = async () => {
-      if (sancionInternos.length) return;
-
-      const response = await fetch(internosEndpoint);
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "No se pudo cargar la hoja internos.");
-      }
-
-      sancionInternos = (data.rows || [])
-        .map((row) => ({
-          interno: String(row[2] || "").trim(),
-          lpu: String(row[3] || "").trim(),
-        }))
-        .filter((item) => item.interno);
-
+    const renderSancionInternoDatalist = () => {
       if (sancionInternoOptions) {
         sancionInternoOptions.innerHTML = "";
         sancionInternos.forEach((item) => {
@@ -2433,6 +2475,45 @@
           sancionInternoOptions.appendChild(option);
         });
       }
+    };
+
+    const loadSancionInternos = async () => {
+      if (sancionInternos.length) return;
+      if (sancionInternosLoadPromise) return sancionInternosLoadPromise;
+
+      sancionInternosLoadPromise = fetch(internosEndpoint)
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || "No se pudo cargar la hoja internos.");
+          }
+
+          const headers = data.headers || [];
+          const internoIndex = headers.findIndex((header) => [
+            "interno",
+            "apellidoynombre",
+            "nombre",
+          ].includes(getHeaderKey(header)));
+          const lpuIndex = headers.findIndex((header) => [
+            "lpu",
+            "lpun",
+            "lpuno",
+          ].includes(getHeaderKey(header)));
+
+          sancionInternos = (data.rows || [])
+            .map((row) => ({
+              interno: String(row[internoIndex >= 0 ? internoIndex : 2] || "").trim(),
+              lpu: String(row[lpuIndex >= 0 ? lpuIndex : 3] || "").trim(),
+            }))
+            .filter((item) => item.interno);
+
+          renderSancionInternoDatalist();
+        })
+        .finally(() => {
+          sancionInternosLoadPromise = null;
+        });
+
+      return sancionInternosLoadPromise;
     };
 
     const loadSancionArticulos = async () => {
@@ -2465,6 +2546,72 @@
       sancionCalificacionItems = data.calificaciones || [];
       renderSancionCalificacionOptions();
       updateSancionFinalScores();
+    };
+
+    const hideSancionInternoSuggestions = () => {
+      if (!sancionInternoSuggestions) return;
+      sancionInternoSuggestions.hidden = true;
+      sancionInternoSuggestions.innerHTML = "";
+    };
+
+    const selectSancionInterno = (item) => {
+      if (sancionInternoInput) {
+        sancionInternoInput.value = item.interno;
+      }
+      if (sancionLpuInput) {
+        sancionLpuInput.value = item.lpu || "";
+      }
+      hideSancionInternoSuggestions();
+    };
+
+    const renderSancionInternoSuggestions = () => {
+      if (!sancionInternoSuggestions || !sancionInternoInput) return;
+
+      const query = normalizeSearchText(sancionInternoInput.value).trim();
+      if (!query) {
+        hideSancionInternoSuggestions();
+        return;
+      }
+
+      const matches = sancionInternos
+        .filter((item) => normalizeSearchText(item.interno).includes(query))
+        .slice(0, 15);
+
+      sancionInternoSuggestions.innerHTML = "";
+      if (!matches.length) {
+        hideSancionInternoSuggestions();
+        return;
+      }
+
+      matches.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "autocomplete-option";
+        button.textContent = item.interno;
+        if (item.lpu) {
+          const lpu = document.createElement("span");
+          lpu.textContent = `LPU ${item.lpu}`;
+          button.appendChild(lpu);
+        }
+        button.addEventListener("mousedown", (event) => {
+          event.preventDefault();
+          selectSancionInterno(item);
+        });
+        sancionInternoSuggestions.appendChild(button);
+      });
+
+      sancionInternoSuggestions.hidden = false;
+    };
+
+    const showSancionInternoSuggestions = async () => {
+      try {
+        await loadSancionInternos();
+        renderSancionInternoSuggestions();
+      } catch (error) {
+        if (sancionRecordStatus) {
+          sancionRecordStatus.textContent = error.message;
+        }
+      }
     };
 
     const updateSancionLpu = () => {
@@ -2508,6 +2655,7 @@
 
     const resetSancionForm = () => {
       sancionRecordForm?.reset();
+      hideSancionInternoSuggestions();
       renderTipoOptions();
       renderArticuloOptions();
       setMultiSummary(sancionTipoSummary, []);
@@ -2527,6 +2675,7 @@
       if (!isOpen) {
         editingSancionRowNumber = null;
         closeSancionMultiSelects();
+        hideSancionInternoSuggestions();
       }
 
       if (isOpen) {
@@ -2537,6 +2686,7 @@
         sancionRecordStatus.textContent = "Cargando opciones...";
         try {
           await Promise.all([loadSancionInternos(), loadSancionArticulos(), loadSancionCalificaciones()]);
+          renderSancionInternoSuggestions();
           sancionRecordStatus.textContent = "";
         } catch (error) {
           sancionRecordStatus.textContent = error.message;
@@ -2898,7 +3048,21 @@
     renderTipoOptions();
     renderArticuloOptions();
 
-    sancionInternoInput?.addEventListener("input", updateSancionLpu);
+    sancionInternoInput?.addEventListener("input", () => {
+      updateSancionLpu();
+      showSancionInternoSuggestions();
+    });
+    sancionInternoInput?.addEventListener("focus", showSancionInternoSuggestions);
+    sancionInternoInput?.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        hideSancionInternoSuggestions();
+      }
+    });
+    document.addEventListener("pointerdown", (event) => {
+      if (!event.target.closest?.(".autocomplete-field")) {
+        hideSancionInternoSuggestions();
+      }
+    });
     document.addEventListener("pointerdown", keepOneSancionMultiSelectOpen);
     document.addEventListener("focusin", keepOneSancionMultiSelectOpen);
     sancionConductaInicio?.addEventListener("change", updateSancionFinalScores);

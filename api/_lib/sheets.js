@@ -644,6 +644,11 @@ const getSancionesCalificacionOptions = async () => {
   };
 };
 
+const getSancionConfigD3 = async () => {
+  const values = await getSheetValues("Configuracion!D3:D3");
+  return String(values[0]?.[0] || "").trim();
+};
+
 const findInternoByLpu = async (lpu) => {
   const requestedLpu = normalizeKey(lpu);
   if (!requestedLpu) {
@@ -1165,6 +1170,7 @@ module.exports = {
   deleteSancionRow,
   getSancionesArticleOptions,
   getSancionesCalificacionOptions,
+  getSancionConfigD3,
   getTramites,
   appendTramite,
   updateTramites,
