@@ -1159,6 +1159,7 @@ const getParteDiarioArchivado = async () => {
 
 module.exports = {
   getConsejoRows,
+  getInternosRows,
   insertConsejoRow,
   updateConsejoRow,
   deleteConsejoRow,
