@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acta Sancion Disciplinaria</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #101820;
+      --muted: #4f5b66;
+      --paper: #ffffff;
+      --screen: #eef3f8;
+      --brand: #234967;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--screen);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.45;
+    }
+
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      min-height: 58px;
+      padding: 10px 18px;
+      background: #f7f9fc;
+      border-bottom: 1px solid #c6d0db;
+    }
+
+    .toolbar strong {
+      color: var(--brand);
+      font-size: 17px;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button,
+    a.button {
+      min-height: 36px;
+      padding: 0 14px;
+      border: 1px solid #1d4161;
+      border-radius: 4px;
+      background: var(--brand);
+      color: #ffffff;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    a.button.secondary {
+      background: #ffffff;
+      color: var(--brand);
+    }
+
+    .page {
+      width: min(210mm, calc(100% - 28px));
+      min-height: 297mm;
+      margin: 18px auto;
+      padding: 24mm 22mm;
+      background: var(--paper);
+      box-shadow: 0 10px 40px rgb(16 24 32 / 18%);
+    }
+
+    .acta-body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #000000;
+    }
+
+    .acta-body p {
+      margin: 0 0 14px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: calc(100% - 16px);
+        min-height: auto;
+        padding: 24px 18px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+
+      .toolbar {
+        display: none;
+      }
+
+      .page {
+        width: auto;
+        min-height: auto;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <div>
+      <strong>Acta Sancion Disciplinaria</strong>
+      <span class="status" id="load-status">Cargando datos...</span>
+    </div>
+    <div class="toolbar-actions">
+      <a class="button secondary" href="consejo_correccional.html">Volver</a>
+      <button type="button" id="download-word-button">Descargar Word</button>
+      <button type="button" id="print-button">Imprimir</button>
+    </div>
+  </header>
+
+  <main class="page" aria-label="Acta de sancion disciplinaria">
+    <section class="acta-body" id="acta-body">
+      <p>Cargando acta...</p>
+    </section>
+  </main>
+
+  <script>
+    const statusNode = document.querySelector("#load-status");
+    const printButton = document.querySelector("#print-button");
+    const downloadWordButton = document.querySelector("#download-word-button");
+    const actaBody = document.querySelector("#acta-body");
+    const sancionesEndpoint = window.location.protocol === "file:"
+      ? "http://127.0.0.1:8780/api/sanciones"
+      : "/api/sanciones";
+
+    const headersFallback = [
+      "EXPEDIENTE",
+      "ACTA N.º",
+      "INTERNO",
+      "LPU",
+      "FECHA DEL HECHO",
+      "DESCRIPCION DEL HECHO",
+      "TIPO",
+      "ARTICULOS",
+      "ORDEN INTERNA",
+      "FECHA ORDEN INTERNA",
+      "SANCION",
+      "CONDUCTA INICIO",
+      "CONCEPTO INICIO",
+      "FASE INICIO",
+      "CRITERIO CONDUCTA",
+      "CRITERIO CONCEPTO",
+      "CONDUCTA FINALIZA",
+      "CONCEPTO FINALIZA",
+      "FASE FINALIZA",
+    ];
+
+    let record = { headers: headersFallback, row: [] };
+    let actaTitle = "Acta Sancion Disciplinaria";
+
+    const normalizeKey = (value) => String(value || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+
+    const getValue = (fieldName) => {
+      const wanted = normalizeKey(fieldName);
+      const index = record.headers.findIndex((header) => normalizeKey(header) === wanted);
+      return index >= 0 ? String(record.row[index] || "").trim() : "";
+    };
+
+    const loadFromSession = () => {
+      try {
+        const rawDraft = window.sessionStorage.getItem("actaSancionDraft");
+        return rawDraft ? JSON.parse(rawDraft) : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const loadRecord = async () => {
+      const requestedRowNumber = Number(new URLSearchParams(window.location.search).get("fila"));
+      const draft = loadFromSession();
+
+      if (requestedRowNumber) {
+        try {
+          const response = await fetch(sancionesEndpoint);
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "No se pudo consultar la hoja de sanciones.");
+          }
+
+          const index = (data.rowNumbers || []).findIndex((rowNumber) => Number(rowNumber) === requestedRowNumber);
+          if (index >= 0) {
+            record = {
+              headers: data.headers?.length ? data.headers : headersFallback,
+              row: data.rows[index] || [],
+            };
+            statusNode.textContent = `Fila ${requestedRowNumber} cargada desde Sheets.`;
+            return;
+          }
+        } catch (error) {
+          statusNode.textContent = `${error.message} Se usaran los datos temporales.`;
+        }
+      }
+
+      if (draft?.row?.length) {
+        record = {
+          headers: draft.headers?.length ? draft.headers : headersFallback,
+          row: draft.row,
+        };
+        statusNode.textContent = "Acta cargada con los datos seleccionados.";
+        return;
+      }
+
+      statusNode.textContent = "No se recibieron datos. Vuelva a Sanciones y pulse ACTA en una fila.";
+    };
+
+    const renderActa = async () => {
+      if (!record.row.length) {
+        actaBody.innerHTML = "<p>No hay datos para renderizar el acta.</p>";
+        return;
+      }
+
+      const response = await fetch(`${sancionesEndpoint}/acta-html`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ values: record.row }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo renderizar el acta.");
+      }
+
+      actaTitle = data.title || actaTitle;
+      actaBody.innerHTML = data.html || "<p>Acta sin contenido.</p>";
+    };
+
+    const sanitizeFileName = (value) => String(value || "acta-sancion")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 120) || "acta-sancion";
+
+    const downloadWord = () => {
+      const acta = actaBody?.cloneNode(true);
+      if (!acta) return;
+
+      const interno = getValue("INTERNO") || "acta";
+      const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${actaTitle}</title>
+  <style>
+    @page { margin: 2.4cm 2.2cm; }
+    body {
+      color: #000000;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+    p {
+      margin: 0 0 14px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>${acta.innerHTML}</body>
+</html>`;
+      const blob = new Blob(["\ufeff", html], { type: "application/msword;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `${sanitizeFileName(`${actaTitle}-${interno}`)}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    const boot = async () => {
+      try {
+        await loadRecord();
+        await renderActa();
+      } catch (error) {
+        statusNode.textContent = error.message;
+        actaBody.innerHTML = `<p>${error.message}</p>`;
+      }
+    };
+
+    printButton?.addEventListener("click", () => window.print());
+    downloadWordButton?.addEventListener("click", downloadWord);
+    boot();
+  </script>
+</body>
+</html>

@@ -454,7 +454,8 @@
     }
 
     .form-field input,
-    .form-field select {
+    .form-field select,
+    .form-field textarea {
       height: 40px;
       min-width: 0;
       padding: 0 12px;
@@ -465,11 +466,96 @@
       font: inherit;
     }
 
+    .form-field textarea {
+      min-height: 118px;
+      padding-top: 10px;
+      resize: vertical;
+    }
+
     .form-field input[readonly] {
       background: #eef3fb;
       color: var(--muted);
       cursor: not-allowed;
     }
+
+    .form-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .multi-select {
+      position: relative;
+      min-width: 0;
+    }
+
+    .multi-select summary {
+      display: flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #fbfdff;
+      color: var(--text);
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .multi-select summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .multi-select summary::after {
+      content: ">";
+      margin-left: auto;
+      color: var(--muted);
+      transform: rotate(90deg);
+    }
+
+    .multi-select[open] summary::after {
+      transform: rotate(-90deg);
+    }
+
+    .multi-options {
+      position: absolute;
+      z-index: 30;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      max-height: 220px;
+      overflow: auto;
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--white);
+      box-shadow: 0 16px 38px rgb(15 23 40 / 18%);
+    }
+
+    .multi-options label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 30px;
+      color: #2d3340;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: none;
+    }
+
+    .multi-options input {
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      padding: 0;
+    }
+
+    .multi-empty {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
 
     .form-status {
       color: var(--muted);
@@ -617,6 +703,10 @@
     .config-option span:last-child {
       color: var(--muted);
       font-size: 22px;
+    }
+
+    .is-hidden {
+      display: none !important;
     }
 
     .metrics {
@@ -1030,7 +1120,7 @@
       </div>
 
       <nav class="nav">
-        <a class="active" href="#" aria-label="Tramites">
+        <a class="active" href="#" aria-label="Tramites" data-view="consejo">
           <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M7 3h7l4 4v14H7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
             <path d="M14 3v5h5M9 12h6M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -1043,7 +1133,7 @@
           </svg>
           <span>Calificaciones</span>
         </a>
-        <a href="#" aria-label="Sanciones">
+        <a href="#" aria-label="Sanciones" data-view="sanciones">
           <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M12 3 4 7v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
             <path d="M12 8v5M12 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -1102,8 +1192,8 @@
       <div class="content">
         <div class="heading-row">
           <div>
-            <h1>Consejo Correccional</h1>
-            <p class="subtitle">Control institucional de informes, dictamenes y situacion legal de internos.</p>
+            <h1 id="view-title">Consejo Correccional</h1>
+            <p class="subtitle" id="view-subtitle">Control institucional de informes, dictamenes y situacion legal de internos.</p>
             <div class="search">
               <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
@@ -1180,7 +1270,7 @@
           </article>
         </section>
 
-        <section class="table-shell" aria-label="Expedientes del consejo correccional">
+        <section class="table-shell" id="table-shell" aria-label="Expedientes del consejo correccional">
           <div class="table-tools">
             <label class="page-size" for="page-size">
               Filas
@@ -1256,6 +1346,108 @@
         <div class="header-buttons">
           <button class="button" id="cancel-new-record" type="button">Cancelar</button>
           <button class="button primary" id="save-new-record" type="submit">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="modal-backdrop" id="sancion-record-modal" aria-hidden="true">
+    <form class="modal" id="sancion-record-form">
+      <div class="modal-header">
+        <h2 class="modal-title">Nueva sancion</h2>
+        <button class="modal-close" id="close-sancion-record" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="sancion-expediente">EXPEDIENTE</label>
+            <input id="sancion-expediente" name="expediente" type="text" autocomplete="off">
+          </div>
+          <div class="form-field">
+            <label for="sancion-acta">ACTA N.º</label>
+            <input id="sancion-acta" name="acta" type="text" autocomplete="off">
+          </div>
+          <div class="form-field">
+            <label for="sancion-interno">INTERNO</label>
+            <input id="sancion-interno" name="interno" type="text" list="sancion-interno-options" autocomplete="off">
+          </div>
+          <div class="form-field">
+            <label for="sancion-lpu">LPU</label>
+            <input id="sancion-lpu" name="lpu" type="text" readonly>
+          </div>
+          <div class="form-field">
+            <label for="sancion-fecha-hecho">FECHA DEL HECHO</label>
+            <input id="sancion-fecha-hecho" name="fechaHecho" type="date">
+          </div>
+          <div class="form-field">
+            <label for="sancion-orden-interna">ORDEN INTERNA</label>
+            <input id="sancion-orden-interna" name="ordenInterna" type="text" autocomplete="off">
+          </div>
+          <div class="form-field">
+            <label for="sancion-fecha-orden-interna">FECHA ORDEN INTERNA</label>
+            <input id="sancion-fecha-orden-interna" name="fechaOrdenInterna" type="date">
+          </div>
+          <div class="form-field">
+            <label for="sancion-sancion">SANCION</label>
+            <select id="sancion-sancion" name="sancion"></select>
+          </div>
+          <div class="form-field full">
+            <label for="sancion-descripcion">DESCRIPCION DEL HECHO</label>
+            <textarea id="sancion-descripcion" name="descripcion"></textarea>
+          </div>
+          <div class="form-field">
+            <label>TIPO</label>
+            <details class="multi-select" id="sancion-tipo-select">
+              <summary id="sancion-tipo-summary">Seleccionar</summary>
+              <div class="multi-options" id="sancion-tipo-options"></div>
+            </details>
+          </div>
+          <div class="form-field">
+            <label>ARTICULOS</label>
+            <details class="multi-select" id="sancion-articulos-select">
+              <summary id="sancion-articulos-summary">Seleccionar tipo primero</summary>
+              <div class="multi-options" id="sancion-articulos-options"></div>
+            </details>
+          </div>
+          <div class="form-field">
+            <label for="sancion-conducta-inicio">CONDUCTA INICIO</label>
+            <select id="sancion-conducta-inicio" name="conductaInicio"></select>
+          </div>
+          <div class="form-field">
+            <label for="sancion-concepto-inicio">CONCEPTO INICIO</label>
+            <select id="sancion-concepto-inicio" name="conceptoInicio"></select>
+          </div>
+          <div class="form-field">
+            <label for="sancion-fase-inicio">FASE INICIO</label>
+            <select id="sancion-fase-inicio" name="faseInicio"></select>
+          </div>
+          <div class="form-field">
+            <label for="sancion-criterio-conducta">CRITERIO CONDUCTA</label>
+            <input id="sancion-criterio-conducta" name="criterioConducta" type="number" min="1" max="10" step="1">
+          </div>
+          <div class="form-field">
+            <label for="sancion-criterio-concepto">CRITERIO CONCEPTO</label>
+            <input id="sancion-criterio-concepto" name="criterioConcepto" type="number" min="1" max="10" step="1">
+          </div>
+          <div class="form-field">
+            <label for="sancion-conducta-finaliza">CONDUCTA FINALIZA</label>
+            <input id="sancion-conducta-finaliza" name="conductaFinaliza" type="text" readonly>
+          </div>
+          <div class="form-field">
+            <label for="sancion-concepto-finaliza">CONCEPTO FINALIZA</label>
+            <input id="sancion-concepto-finaliza" name="conceptoFinaliza" type="text" readonly>
+          </div>
+          <div class="form-field">
+            <label for="sancion-fase-finaliza">FASE FINALIZA</label>
+            <select id="sancion-fase-finaliza" name="faseFinaliza"></select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span class="form-status" id="sancion-record-status"></span>
+        <div class="header-buttons">
+          <button class="button" id="cancel-sancion-record" type="button">Cancelar</button>
+          <button class="button primary" id="save-sancion-record" type="submit">Guardar</button>
         </div>
       </div>
     </form>
@@ -1357,10 +1549,15 @@
   </div>
 
   <datalist id="tramite-options"></datalist>
+  <datalist id="sancion-interno-options"></datalist>
   <script>
     const table = document.querySelector(".table-wrap table");
     const shell = document.querySelector(".shell");
     const sidebarToggle = document.querySelector("#sidebar-toggle");
+    const navLinks = Array.from(document.querySelectorAll(".nav a[data-view]"));
+    const viewTitle = document.querySelector("#view-title");
+    const viewSubtitle = document.querySelector("#view-subtitle");
+    const tableShell = document.querySelector("#table-shell");
     const recordCount = document.querySelector("#record-count");
     const pageStatus = document.querySelector("#page-status");
     const prevPageButton = document.querySelector("#prev-page");
@@ -1376,6 +1573,28 @@
     const closeNewRecordButton = document.querySelector("#close-new-record");
     const cancelNewRecordButton = document.querySelector("#cancel-new-record");
     const saveNewRecordButton = document.querySelector("#save-new-record");
+    const sancionRecordModal = document.querySelector("#sancion-record-modal");
+    const sancionRecordForm = document.querySelector("#sancion-record-form");
+    const closeSancionRecordButton = document.querySelector("#close-sancion-record");
+    const cancelSancionRecordButton = document.querySelector("#cancel-sancion-record");
+    const saveSancionRecordButton = document.querySelector("#save-sancion-record");
+    const sancionRecordStatus = document.querySelector("#sancion-record-status");
+    const sancionInternoOptions = document.querySelector("#sancion-interno-options");
+    const sancionInternoInput = document.querySelector("#sancion-interno");
+    const sancionLpuInput = document.querySelector("#sancion-lpu");
+    const sancionTipoOptions = document.querySelector("#sancion-tipo-options");
+    const sancionTipoSummary = document.querySelector("#sancion-tipo-summary");
+    const sancionArticulosOptions = document.querySelector("#sancion-articulos-options");
+    const sancionArticulosSummary = document.querySelector("#sancion-articulos-summary");
+    const sancionConductaInicio = document.querySelector("#sancion-conducta-inicio");
+    const sancionConceptoInicio = document.querySelector("#sancion-concepto-inicio");
+    const sancionFaseInicio = document.querySelector("#sancion-fase-inicio");
+    const sancionFaseFinaliza = document.querySelector("#sancion-fase-finaliza");
+    const sancionSancionSelect = document.querySelector("#sancion-sancion");
+    const sancionCriterioConducta = document.querySelector("#sancion-criterio-conducta");
+    const sancionCriterioConcepto = document.querySelector("#sancion-criterio-concepto");
+    const sancionConductaFinaliza = document.querySelector("#sancion-conducta-finaliza");
+    const sancionConceptoFinaliza = document.querySelector("#sancion-concepto-finaliza");
     const settingsButton = document.querySelector("#settings-button");
     const settingsModal = document.querySelector("#settings-modal");
     const closeSettingsButton = document.querySelector("#close-settings");
@@ -1413,16 +1632,55 @@
     let tableRowNumbers = [];
     let currentPage = 1;
     let editingRowNumber = null;
+    let editingSancionRowNumber = null;
     const spreadsheetId = "1DuK6GHozJGHSUQ7TVDIKODDm5XJnNpq9k9lheHWLvHE";
     const sheetName = "consejo";
+    const sancionesSheetName = "SANCIONES_RESUELTA";
     const sheetsCallback = "renderConsejoCorreccional";
+    const sancionesSheetsCallback = "renderSancionesResuelta";
+    const viewConfig = {
+      consejo: {
+        title: "Consejo Correccional",
+        subtitle: "Control institucional de informes, dictamenes y situacion legal de internos.",
+        searchPlaceholder: "Buscar expedientes, internos o tramites...",
+        tableLabel: "Expedientes del consejo correccional",
+        emptyMessage: "La hoja consejo no tiene registros cargados.",
+        noResultsMessage: "No se encontraron expedientes para esa busqueda.",
+        recordSingular: "expediente",
+        recordPlural: "expedientes",
+        showActions: true,
+        allowNew: true,
+      },
+      sanciones: {
+        title: "Sanciones",
+        subtitle: "Vista de la hoja SANCIONES_RESUELTA del libro Consejo Correccional, rango A:S.",
+        searchPlaceholder: "Buscar sanciones, internos o resoluciones...",
+        tableLabel: "Sanciones resueltas",
+        emptyMessage: "La hoja SANCIONES_RESUELTA no tiene registros cargados.",
+        noResultsMessage: "No se encontraron sanciones para esa busqueda.",
+        recordSingular: "sancion",
+        recordPlural: "sanciones",
+        showActions: true,
+        allowNew: true,
+      },
+    };
+    let currentView = "consejo";
     let tramiteItems = [];
     const apiEndpoint = window.location.protocol === "file:"
       ? "http://127.0.0.1:8780/api/consejo"
       : "/api/consejo";
+    const sancionesEndpoint = window.location.protocol === "file:"
+      ? "http://127.0.0.1:8780/api/sanciones"
+      : "/api/sanciones";
+    const sancionesArticulosEndpoint = window.location.protocol === "file:"
+      ? "http://127.0.0.1:8780/api/config/sanciones-articulos"
+      : "/api/config/sanciones-articulos";
     const tramitesEndpoint = window.location.protocol === "file:"
       ? "http://127.0.0.1:8780/api/tramites"
       : "/api/tramites";
+    const internosEndpoint = window.location.protocol === "file:"
+      ? "http://127.0.0.1:8780/api/internos"
+      : "/api/internos";
     const internoEndpoint = window.location.protocol === "file:"
       ? "http://127.0.0.1:8780/api/interno"
       : "/api/interno";
@@ -1433,6 +1691,8 @@
       ? "http://127.0.0.1:8780/api/config/centro-evaluacion-procesados"
       : "/api/config/centro-evaluacion-procesados";
     let internoLookupTimer = null;
+    let sancionInternos = [];
+    let sancionArticulosByTipo = { LEVE: [], MEDIA: [], GRAVE: [] };
 
     sidebarToggle?.addEventListener("click", () => {
       const isCollapsed = shell.classList.toggle("sidebar-collapsed");
@@ -1848,6 +2108,34 @@
       });
     };
 
+    const getCurrentViewConfig = () => viewConfig[currentView] || viewConfig.consejo;
+
+    const updateViewChrome = () => {
+      const config = getCurrentViewConfig();
+
+      navLinks.forEach((link) => {
+        link.classList.toggle("active", link.dataset.view === currentView);
+      });
+
+      if (viewTitle) {
+        viewTitle.textContent = config.title;
+      }
+
+      if (viewSubtitle) {
+        viewSubtitle.textContent = config.subtitle;
+      }
+
+      if (tableSearch) {
+        tableSearch.placeholder = config.searchPlaceholder;
+      }
+
+      if (tableShell) {
+        tableShell.setAttribute("aria-label", config.tableLabel);
+      }
+
+      newRecordButton?.classList.toggle("is-hidden", !config.allowNew);
+    };
+
     const renderSheetRows = (rows) => {
       const headerCells = rows[0]?.c || [];
       const headers = headerCells.map(formatCell).filter(Boolean);
@@ -1863,7 +2151,9 @@
       tableHeaders = headers;
       allTableRows = dataRows;
       allTableRowNumbers = rowNumbers;
-      buildNewRecordForm();
+      if (getCurrentViewConfig().allowNew) {
+        buildNewRecordForm();
+      }
       applySearch();
     };
 
@@ -1937,6 +2227,359 @@
       }
     };
 
+    const scoreOptions = [
+      ["", "Seleccionar"],
+      ["0", "CERO (00)"],
+      ["1", "UNO (01)"],
+      ["2", "DOS (02)"],
+      ["3", "TRES (03)"],
+      ["4", "CUATRO (04)"],
+      ["5", "CINCO (05)"],
+      ["6", "SEIS (06)"],
+      ["7", "SIETE (07)"],
+      ["8", "OCHO (08)"],
+      ["9", "NUEVE (09)"],
+      ["10", "DIEZ (10)"],
+    ];
+
+    const faseOptions = [
+      "",
+      "Periodo de Observacion",
+      "Socializacion",
+      "Consolidacion",
+      "Confianza",
+      "Periodo Prueba",
+    ];
+
+    const sancionOptions = [
+      "",
+      "Artículo 19 Inc. a)",
+      "Artículo 19 Inc. b)",
+      "Artículo 19 Inc. c)",
+      "Artículo 19 Inc. d)",
+      "Artículo 19 Inc. e)",
+      "Artículo 19 Inc. f)",
+      "Artículo 19 Inc. g)",
+      "Artículo 19 Inc. h)",
+    ];
+
+    const fillSelectOptions = (select, options) => {
+      if (!select) return;
+
+      select.innerHTML = "";
+      options.forEach((option) => {
+        const element = document.createElement("option");
+        if (Array.isArray(option)) {
+          element.value = option[0];
+          element.textContent = option[1];
+        } else {
+          element.value = option;
+          element.textContent = option || "Seleccionar";
+        }
+        select.appendChild(element);
+      });
+    };
+
+    const getCheckedValues = (container) => Array.from(container?.querySelectorAll("input:checked") || [])
+      .map((input) => input.value);
+
+    const setMultiSummary = (summary, values, emptyText = "Seleccionar") => {
+      if (!summary) return;
+      summary.textContent = values.length ? values.join(", ") : emptyText;
+    };
+
+    const parseMultiValues = (value) => String(value || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    const setCheckedValues = (container, values) => {
+      const selected = new Set(values);
+      Array.from(container?.querySelectorAll("input[type=\"checkbox\"]") || []).forEach((input) => {
+        input.checked = selected.has(input.value);
+      });
+    };
+
+    const scoreValueFromText = (value) => {
+      const match = String(value || "").match(/\((\d{1,2})\)|\b(\d{1,2})\b/);
+      return match ? String(Number(match[1] || match[2])) : "";
+    };
+
+    const sheetDateToInputDate = (value) => {
+      const text = String(value || "").trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+      const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (!match) return "";
+      const [, day, month, year] = match;
+      return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    };
+
+    const closeSancionMultiSelects = (except = null) => {
+      document.querySelectorAll("#sancion-record-modal .multi-select[open]").forEach((select) => {
+        if (select !== except) {
+          select.open = false;
+        }
+      });
+    };
+
+    const keepOneSancionMultiSelectOpen = (event) => {
+      const currentSelect = event.target.closest?.("#sancion-record-modal .multi-select");
+      closeSancionMultiSelects(currentSelect || null);
+    };
+
+    const renderTipoOptions = () => {
+      if (!sancionTipoOptions) return;
+
+      sancionTipoOptions.innerHTML = "";
+      ["LEVE", "MEDIA", "GRAVE"].forEach((tipo) => {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = tipo;
+        checkbox.addEventListener("change", () => {
+          setMultiSummary(sancionTipoSummary, getCheckedValues(sancionTipoOptions));
+          renderArticuloOptions();
+        });
+        label.append(checkbox, tipo);
+        sancionTipoOptions.appendChild(label);
+      });
+    };
+
+    const renderArticuloOptions = () => {
+      if (!sancionArticulosOptions) return;
+
+      const selectedTipos = getCheckedValues(sancionTipoOptions);
+      const selectedArticles = new Set(getCheckedValues(sancionArticulosOptions));
+      const articles = [...new Set([
+        ...selectedTipos.flatMap((tipo) => sancionArticulosByTipo[tipo] || []),
+        ...selectedArticles,
+      ])];
+
+      sancionArticulosOptions.innerHTML = "";
+      if (!articles.length) {
+        const empty = document.createElement("span");
+        empty.className = "multi-empty";
+        empty.textContent = selectedTipos.length
+          ? "No hay articulos configurados para el tipo seleccionado."
+          : "Selecciona un tipo primero.";
+        sancionArticulosOptions.appendChild(empty);
+        setMultiSummary(sancionArticulosSummary, [], selectedTipos.length ? "Sin articulos" : "Seleccionar tipo primero");
+        return;
+      }
+
+      articles.forEach((article) => {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = article;
+        checkbox.checked = selectedArticles.has(article);
+        checkbox.addEventListener("change", () => {
+          setMultiSummary(sancionArticulosSummary, getCheckedValues(sancionArticulosOptions));
+        });
+        label.append(checkbox, article);
+        sancionArticulosOptions.appendChild(label);
+      });
+
+      setMultiSummary(sancionArticulosSummary, getCheckedValues(sancionArticulosOptions));
+    };
+
+    const loadSancionInternos = async () => {
+      if (sancionInternos.length) return;
+
+      const response = await fetch(internosEndpoint);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo cargar la hoja internos.");
+      }
+
+      sancionInternos = (data.rows || [])
+        .map((row) => ({
+          interno: String(row[2] || "").trim(),
+          lpu: String(row[3] || "").trim(),
+        }))
+        .filter((item) => item.interno);
+
+      if (sancionInternoOptions) {
+        sancionInternoOptions.innerHTML = "";
+        sancionInternos.forEach((item) => {
+          const option = document.createElement("option");
+          option.value = item.interno;
+          option.label = item.lpu ? `${item.interno} - ${item.lpu}` : item.interno;
+          sancionInternoOptions.appendChild(option);
+        });
+      }
+    };
+
+    const loadSancionArticulos = async () => {
+      const hasArticles = Object.values(sancionArticulosByTipo).some((items) => items.length);
+      if (hasArticles) return;
+
+      const response = await fetch(sancionesArticulosEndpoint);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo cargar la configuracion de articulos.");
+      }
+
+      sancionArticulosByTipo = {
+        LEVE: data.leve || [],
+        MEDIA: data.media || [],
+        GRAVE: data.grave || [],
+      };
+      renderArticuloOptions();
+    };
+
+    const updateSancionLpu = () => {
+      const requested = normalizeSearchText(sancionInternoInput?.value || "").trim();
+      const match = sancionInternos.find((item) => normalizeSearchText(item.interno).trim() === requested);
+      if (sancionLpuInput) {
+        sancionLpuInput.value = match?.lpu || "";
+      }
+    };
+
+    const clampCriterion = (input) => {
+      if (!input || input.value === "") return;
+      const value = Math.min(10, Math.max(1, Number(input.value)));
+      input.value = Number.isFinite(value) ? String(value) : "";
+    };
+
+    const updateSancionFinalScores = () => {
+      const conductaInicio = Number(sancionConductaInicio?.value);
+      const conceptoInicio = Number(sancionConceptoInicio?.value);
+      const criterioConducta = Number(sancionCriterioConducta?.value);
+      const criterioConcepto = Number(sancionCriterioConcepto?.value);
+
+      if (sancionConductaFinaliza) {
+        sancionConductaFinaliza.value = Number.isFinite(conductaInicio) && Number.isFinite(criterioConducta)
+          ? String(conductaInicio - criterioConducta)
+          : "";
+      }
+
+      if (sancionConceptoFinaliza) {
+        sancionConceptoFinaliza.value = Number.isFinite(conceptoInicio) && Number.isFinite(criterioConcepto)
+          ? String(conceptoInicio - criterioConcepto)
+          : "";
+      }
+    };
+
+    const resetSancionForm = () => {
+      sancionRecordForm?.reset();
+      renderTipoOptions();
+      renderArticuloOptions();
+      setMultiSummary(sancionTipoSummary, []);
+      setMultiSummary(sancionArticulosSummary, [], "Seleccionar tipo primero");
+      updateSancionFinalScores();
+      if (sancionRecordStatus) {
+        sancionRecordStatus.textContent = "";
+      }
+    };
+
+    const setSancionModalOpen = async (isOpen, { reset = true } = {}) => {
+      if (!sancionRecordModal) return;
+
+      sancionRecordModal.classList.toggle("open", isOpen);
+      sancionRecordModal.setAttribute("aria-hidden", String(!isOpen));
+
+      if (!isOpen) {
+        editingSancionRowNumber = null;
+        closeSancionMultiSelects();
+      }
+
+      if (isOpen) {
+        if (reset) {
+          editingSancionRowNumber = null;
+          resetSancionForm();
+        }
+        sancionRecordStatus.textContent = "Cargando opciones...";
+        try {
+          await Promise.all([loadSancionInternos(), loadSancionArticulos()]);
+          sancionRecordStatus.textContent = "";
+        } catch (error) {
+          sancionRecordStatus.textContent = error.message;
+        }
+        sancionRecordForm?.querySelector("input")?.focus();
+      }
+    };
+
+    const setSancionFormValues = (rowValues = []) => {
+      if (!sancionRecordForm) return;
+
+      sancionRecordForm.querySelector('[name="expediente"]').value = rowValues[0] || "";
+      sancionRecordForm.querySelector('[name="acta"]').value = rowValues[1] || "";
+      sancionRecordForm.querySelector('[name="interno"]').value = rowValues[2] || "";
+      sancionRecordForm.querySelector('[name="lpu"]').value = rowValues[3] || "";
+      sancionRecordForm.querySelector('[name="fechaHecho"]').value = sheetDateToInputDate(rowValues[4]);
+      sancionRecordForm.querySelector('[name="descripcion"]').value = rowValues[5] || "";
+      sancionRecordForm.querySelector('[name="ordenInterna"]').value = rowValues[8] || "";
+      sancionRecordForm.querySelector('[name="fechaOrdenInterna"]').value = sheetDateToInputDate(rowValues[9]);
+      sancionSancionSelect.value = rowValues[10] || "";
+      sancionConductaInicio.value = scoreValueFromText(rowValues[11]);
+      sancionConceptoInicio.value = scoreValueFromText(rowValues[12]);
+      sancionFaseInicio.value = rowValues[13] || "";
+      sancionCriterioConducta.value = rowValues[14] || "";
+      sancionCriterioConcepto.value = rowValues[15] || "";
+      sancionConductaFinaliza.value = rowValues[16] || "";
+      sancionConceptoFinaliza.value = rowValues[17] || "";
+      sancionFaseFinaliza.value = rowValues[18] || "";
+
+      setCheckedValues(sancionTipoOptions, parseMultiValues(rowValues[6]));
+      setMultiSummary(sancionTipoSummary, getCheckedValues(sancionTipoOptions));
+      const rowArticles = parseMultiValues(rowValues[7]);
+      sancionArticulosOptions.innerHTML = "";
+      rowArticles.forEach((article) => {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.value = article;
+        checkbox.checked = true;
+        checkbox.addEventListener("change", () => {
+          setMultiSummary(sancionArticulosSummary, getCheckedValues(sancionArticulosOptions));
+        });
+        label.append(checkbox, article);
+        sancionArticulosOptions.appendChild(label);
+      });
+      renderArticuloOptions();
+      setCheckedValues(sancionArticulosOptions, rowArticles);
+      setMultiSummary(sancionArticulosSummary, getCheckedValues(sancionArticulosOptions));
+      updateSancionFinalScores();
+    };
+
+    const openSancionEditForm = async (rowValues, rowNumber) => {
+      editingSancionRowNumber = rowNumber;
+      resetSancionForm();
+      await setSancionModalOpen(true, { reset: false });
+      setSancionFormValues(rowValues);
+      sancionRecordStatus.textContent = "";
+      sancionRecordForm?.querySelector("input")?.focus();
+    };
+
+    const getSancionValues = () => {
+      const formData = new FormData(sancionRecordForm);
+      const tipos = getCheckedValues(sancionTipoOptions);
+      const articulos = getCheckedValues(sancionArticulosOptions);
+
+      return [
+        formData.get("expediente") || "",
+        formData.get("acta") || "",
+        formData.get("interno") || "",
+        formData.get("lpu") || "",
+        formData.get("fechaHecho") || "",
+        formData.get("descripcion") || "",
+        tipos.join(", "),
+        articulos.join(", "),
+        formData.get("ordenInterna") || "",
+        formData.get("fechaOrdenInterna") || "",
+        formData.get("sancion") || "",
+        sancionConductaInicio?.selectedOptions?.[0]?.textContent === "Seleccionar" ? "" : sancionConductaInicio?.selectedOptions?.[0]?.textContent || "",
+        sancionConceptoInicio?.selectedOptions?.[0]?.textContent === "Seleccionar" ? "" : sancionConceptoInicio?.selectedOptions?.[0]?.textContent || "",
+        formData.get("faseInicio") || "",
+        formData.get("criterioConducta") || "",
+        formData.get("criterioConcepto") || "",
+        formData.get("conductaFinaliza") || "",
+        formData.get("conceptoFinaliza") || "",
+        formData.get("faseFinaliza") || "",
+      ].map((value) => String(value || "").trim());
+    };
+
     const openEditForm = (rowValues, rowNumber) => {
       if (!newRecordModal) return;
 
@@ -1982,6 +2625,43 @@
       }
     };
 
+    const deleteSancionRow = async (rowValues, rowNumber) => {
+      const label = rowValues[2] || rowValues[0] || "esta sancion";
+      const confirmed = window.confirm(`Eliminar ${label}? Esta accion no se puede deshacer.`);
+
+      if (!confirmed) return;
+
+      try {
+        const response = await fetch(sancionesEndpoint, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rowNumber }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "No se pudo eliminar la sancion.");
+        }
+
+        renderApiRows(data);
+      } catch (error) {
+        window.alert(error.message);
+      }
+    };
+
+    const openSancionActa = (rowValues, rowNumber) => {
+      const actaUrl = new URL("acta_sanciones.html", window.location.href);
+      const draft = { headers: tableHeaders, row: rowValues, rowNumber };
+
+      window.sessionStorage.setItem("actaSancionDraft", JSON.stringify(draft));
+
+      if (rowNumber) {
+        actaUrl.searchParams.set("fila", rowNumber);
+      }
+
+      window.open(actaUrl, "_blank", "noopener");
+    };
+
     const normalizeSearchText = (value) => String(value || "")
       .toLowerCase()
       .normalize("NFD")
@@ -2020,9 +2700,11 @@
           }
           theadRow.appendChild(th);
         });
-        const actionsHeader = document.createElement("th");
-        actionsHeader.textContent = "Acciones";
-        theadRow.appendChild(actionsHeader);
+        if (getCurrentViewConfig().showActions) {
+          const actionsHeader = document.createElement("th");
+          actionsHeader.textContent = "Acciones";
+          theadRow.appendChild(actionsHeader);
+        }
       }
 
       tbody.innerHTML = "";
@@ -2049,57 +2731,81 @@
           tr.appendChild(td);
         }
 
-        const actionCell = document.createElement("td");
-        const actionGroup = document.createElement("div");
-        const actaButton = document.createElement("button");
-        const editButton = document.createElement("button");
-        const deleteButton = document.createElement("button");
+        if (getCurrentViewConfig().showActions) {
+          const actionCell = document.createElement("td");
+          const actionGroup = document.createElement("div");
+          const actaButton = document.createElement("button");
+          const editButton = document.createElement("button");
+          const deleteButton = document.createElement("button");
 
-        actionGroup.className = "row-actions";
-        actaButton.className = "row-action acta";
-        actaButton.type = "button";
-        actaButton.textContent = "Acta";
-        actaButton.addEventListener("click", () => {
-          const actaUrl = new URL("acta_cosejo.html", window.location.href);
-          const draft = { headers: tableHeaders, row: cells, rowNumber };
+          actionGroup.className = "row-actions";
+          actaButton.className = "row-action acta";
+          actaButton.type = "button";
+          actaButton.textContent = "ACTA";
+          actaButton.addEventListener("click", () => {
+            if (currentView === "sanciones") {
+              openSancionActa(cells, rowNumber);
+              return;
+            }
 
-          window.sessionStorage.setItem("actaConsejoDraft", JSON.stringify(draft));
+            const actaUrl = new URL("acta_cosejo.html", window.location.href);
+            const draft = { headers: tableHeaders, row: cells, rowNumber };
 
-          if (rowNumber) {
-            actaUrl.searchParams.set("fila", rowNumber);
-          }
+            window.sessionStorage.setItem("actaConsejoDraft", JSON.stringify(draft));
 
-          window.open(actaUrl, "_blank", "noopener");
-        });
+            if (rowNumber) {
+              actaUrl.searchParams.set("fila", rowNumber);
+            }
 
-        editButton.className = "row-action";
-        editButton.type = "button";
-        editButton.textContent = "Editar";
-        editButton.addEventListener("click", () => openEditForm(cells, rowNumber));
+            window.open(actaUrl, "_blank", "noopener");
+          });
 
-        deleteButton.className = "row-action danger";
-        deleteButton.type = "button";
-        deleteButton.textContent = "Eliminar";
-        deleteButton.addEventListener("click", () => deleteRow(cells, rowNumber));
+          editButton.className = "row-action";
+          editButton.type = "button";
+          editButton.textContent = "Editar";
+          editButton.addEventListener("click", () => {
+            if (currentView === "sanciones") {
+              openSancionEditForm(cells, rowNumber);
+              return;
+            }
 
-        actionGroup.append(actaButton, editButton, deleteButton);
-        actionCell.appendChild(actionGroup);
-        tr.appendChild(actionCell);
+            openEditForm(cells, rowNumber);
+          });
+
+          deleteButton.className = "row-action danger";
+          deleteButton.type = "button";
+          deleteButton.textContent = "Eliminar";
+          deleteButton.addEventListener("click", () => {
+            if (currentView === "sanciones") {
+              deleteSancionRow(cells, rowNumber);
+              return;
+            }
+
+            deleteRow(cells, rowNumber);
+          });
+
+          actionGroup.append(actaButton, editButton, deleteButton);
+          actionCell.appendChild(actionGroup);
+          tr.appendChild(actionCell);
+        }
 
         tbody.appendChild(tr);
       });
 
       if (!totalRows) {
+        const config = getCurrentViewConfig();
         setMessageRow(query
-          ? "No se encontraron expedientes para esa busqueda."
-          : "La hoja consejo no tiene registros cargados.");
+          ? config.noResultsMessage
+          : config.emptyMessage);
       }
 
       if (recordCount) {
+        const config = getCurrentViewConfig();
         const visibleStart = totalRows ? startIndex + 1 : 0;
         const visibleEnd = Math.min(startIndex + pageSize, totalRows);
         const suffix = query ? ` encontrados de ${allTableRows.length}` : "";
-        recordCount.textContent = `${visibleStart}-${visibleEnd} de ${totalRows} expediente${totalRows === 1 ? "" : "s"}${suffix}`;
+        const recordLabel = totalRows === 1 ? config.recordSingular : config.recordPlural;
+        recordCount.textContent = `${visibleStart}-${visibleEnd} de ${totalRows} ${recordLabel}${suffix}`;
       }
 
       if (pageStatus) {
@@ -2140,12 +2846,75 @@
 
     tableSearch?.addEventListener("input", applySearch);
 
-    newRecordButton?.addEventListener("click", () => setModalOpen(true));
+    fillSelectOptions(sancionConductaInicio, scoreOptions);
+    fillSelectOptions(sancionConceptoInicio, scoreOptions);
+    fillSelectOptions(sancionFaseInicio, faseOptions);
+    fillSelectOptions(sancionFaseFinaliza, faseOptions);
+    fillSelectOptions(sancionSancionSelect, sancionOptions);
+    renderTipoOptions();
+    renderArticuloOptions();
+
+    sancionInternoInput?.addEventListener("input", updateSancionLpu);
+    document.addEventListener("pointerdown", keepOneSancionMultiSelectOpen);
+    document.addEventListener("focusin", keepOneSancionMultiSelectOpen);
+    sancionConductaInicio?.addEventListener("change", updateSancionFinalScores);
+    sancionConceptoInicio?.addEventListener("change", updateSancionFinalScores);
+    sancionCriterioConducta?.addEventListener("input", () => {
+      clampCriterion(sancionCriterioConducta);
+      updateSancionFinalScores();
+    });
+    sancionCriterioConcepto?.addEventListener("input", () => {
+      clampCriterion(sancionCriterioConcepto);
+      updateSancionFinalScores();
+    });
+
+    navLinks.forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const nextView = link.dataset.view;
+        if (!viewConfig[nextView] || nextView === currentView) return;
+
+        currentView = nextView;
+        tableHeaders = [];
+        allTableRows = [];
+        allTableRowNumbers = [];
+        tableRows = [];
+        tableRowNumbers = [];
+        currentPage = 1;
+        if (tableSearch) {
+          tableSearch.value = "";
+        }
+        updateViewChrome();
+
+        if (currentView === "sanciones") {
+          loadSancionesSheet();
+          return;
+        }
+
+        loadConsejoSheet();
+      });
+    });
+
+    newRecordButton?.addEventListener("click", () => {
+      if (currentView === "sanciones") {
+        setSancionModalOpen(true);
+        return;
+      }
+
+      setModalOpen(true);
+    });
     closeNewRecordButton?.addEventListener("click", () => setModalOpen(false));
     cancelNewRecordButton?.addEventListener("click", () => setModalOpen(false));
     newRecordModal?.addEventListener("click", (event) => {
       if (event.target === newRecordModal) {
         setModalOpen(false);
+      }
+    });
+    closeSancionRecordButton?.addEventListener("click", () => setSancionModalOpen(false));
+    cancelSancionRecordButton?.addEventListener("click", () => setSancionModalOpen(false));
+    sancionRecordModal?.addEventListener("click", (event) => {
+      if (event.target === sancionRecordModal) {
+        setSancionModalOpen(false);
       }
     });
 
@@ -2309,7 +3078,48 @@
       }
     });
 
+    sancionRecordForm?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      updateSancionLpu();
+      updateSancionFinalScores();
+      const values = getSancionValues();
+      const [expediente, acta, interno, lpu, fechaHecho, descripcion, tipo, articulos, ordenInterna, fechaOrdenInterna, sancion] = values;
+      const isEditing = Boolean(editingSancionRowNumber);
+
+      if (!expediente || !acta || !interno || !lpu || !fechaHecho || !descripcion || !tipo || !ordenInterna || !fechaOrdenInterna || !sancion || (!articulos && !isEditing)) {
+        sancionRecordStatus.textContent = "Completa expediente, acta, interno, fecha, descripcion, tipo, orden interna, fecha de orden y sancion. Para registros nuevos tambien selecciona articulos.";
+        return;
+      }
+
+      sancionRecordStatus.textContent = "Guardando sancion...";
+      saveSancionRecordButton.disabled = true;
+
+      try {
+        const response = await fetch(sancionesEndpoint, {
+          method: isEditing ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ values, rowNumber: editingSancionRowNumber }),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "No se pudo guardar la sancion.");
+        }
+
+        renderApiRows(data);
+        editingSancionRowNumber = null;
+        setSancionModalOpen(false);
+      } catch (error) {
+        sancionRecordStatus.textContent = error.message;
+      } finally {
+        saveSancionRecordButton.disabled = false;
+      }
+    });
+
     window[sheetsCallback] = (response) => {
+      if (currentView !== "consejo") return;
+
       if (response?.status === "error") {
         setMessageRow("No se pudo leer la hoja consejo. Revisar que el archivo este compartido con acceso de lectura.");
         return;
@@ -2324,17 +3134,66 @@
       renderSheetRows(rows);
     };
 
+    window[sancionesSheetsCallback] = (response) => {
+      if (currentView !== "sanciones") return;
+
+      if (response?.status === "error") {
+        setMessageRow("No se pudo leer la hoja SANCIONES_RESUELTA. Revisar que el archivo este compartido con acceso de lectura.");
+        return;
+      }
+
+      const rows = response?.table?.rows || [];
+      if (!rows.length) {
+        setMessageRow("No se encontraron datos en la hoja SANCIONES_RESUELTA.");
+        return;
+      }
+
+      renderSheetRows(rows);
+    };
+
     const loadConsejoSheet = () => {
       if (!table) return;
+      currentView = "consejo";
+      updateViewChrome();
+      setMessageRow("Cargando datos desde Google Sheets...");
 
       fetch(apiEndpoint)
         .then((response) => {
           if (!response.ok) throw new Error("API local no disponible");
           return response.json();
         })
-        .then(renderApiRows)
+        .then((data) => {
+          if (currentView === "consejo") {
+            renderApiRows(data);
+          }
+        })
         .catch(() => {
-          loadPublicSheet();
+          if (currentView === "consejo") {
+            loadPublicSheet();
+          }
+        });
+    };
+
+    const loadSancionesSheet = () => {
+      if (!table) return;
+      currentView = "sanciones";
+      updateViewChrome();
+      setMessageRow("Cargando sanciones desde Google Sheets...");
+
+      fetch(sancionesEndpoint)
+        .then((response) => {
+          if (!response.ok) throw new Error("API local no disponible");
+          return response.json();
+        })
+        .then((data) => {
+          if (currentView === "sanciones") {
+            renderApiRows(data);
+          }
+        })
+        .catch(() => {
+          if (currentView === "sanciones") {
+            loadPublicSancionesSheet();
+          }
         });
     };
 
@@ -2353,7 +3212,26 @@
       document.body.appendChild(script);
     };
 
+    const loadPublicSancionesSheet = () => {
+      const script = document.createElement("script");
+      const params = new URLSearchParams({
+        tqx: `out:json;responseHandler:${sancionesSheetsCallback}`,
+        sheet: sancionesSheetName,
+        range: "A:Q",
+      });
+
+      script.src = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?${params}`;
+      script.onerror = () => {
+        if (currentView === "sanciones") {
+          setMessageRow("No se pudo conectar con Google Sheets.");
+        }
+      };
+
+      document.body.appendChild(script);
+    };
+
     loadTramites();
+    updateViewChrome();
     loadConsejoSheet();
   </script>
 </body>

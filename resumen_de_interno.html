@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="light" lang="es" style="">
 
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Perfil del Empleado - Sistema de Gestión de Empleados</title>
+    <title>Resumen de Interno - Sistema de Gestión de Internos</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet">
     <link
@@ -110,89 +110,289 @@
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fb;
         }
+
+        .search-suggestions {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 6px);
+            z-index: 60;
+            max-height: 320px;
+            overflow: auto;
+            border: 1px solid #c2c7d1;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 16px 30px rgba(0, 53, 95, 0.16);
+            display: none;
+        }
+
+        .search-suggestions.visible {
+            display: block;
+        }
+
+        .suggestion-option {
+            width: 100%;
+            padding: 10px 14px;
+            border: 0;
+            border-bottom: 1px solid #eceef0;
+            background: #ffffff;
+            color: #191c1e;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .suggestion-option:last-child {
+            border-bottom: 0;
+        }
+
+        .suggestion-option:hover,
+        .suggestion-option.active {
+            background: #d0e1fb;
+        }
+
+        .suggestion-name {
+            display: block;
+            color: #00355f;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .suggestion-meta {
+            display: block;
+            margin-top: 2px;
+            color: #42474f;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .topics-horizontal {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .topics-tabs {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 8px;
+            border: 1px solid #c2c7d1;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        .topic-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 36px;
+            padding: 0 14px;
+            border: 1px solid #c2c7d1;
+            border-radius: 8px;
+            background: #f7f9fb;
+            color: #00355f;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .topic-tab:hover,
+        .topic-tab.active {
+            background: #d0e1fb;
+            border-color: #00355f;
+        }
+
+        .topic-tab .material-symbols-outlined {
+            font-size: 18px;
+            transition: transform 0.15s;
+        }
+
+        .topic-tab.active .material-symbols-outlined {
+            transform: rotate(180deg);
+        }
+
+        .topic-section {
+            display: none !important;
+        }
+
+        .topic-section.active {
+            display: flex !important;
+        }
+
+        .topic-section.empty-topic {
+            display: none !important;
+        }
+
+        .topic-section > div:first-child {
+            display: none;
+        }
+
+        .summary-field-label {
+            display: inline-flex;
+            align-items: center;
+            min-height: 22px;
+            padding: 2px 8px;
+            margin-bottom: 6px;
+            border-left: 3px solid #00355f;
+            border-radius: 4px;
+            background: #d0e1fb;
+            color: #00355f;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+        }
+
+        .readonly-table-wrap {
+            overflow: auto;
+            border: 1px solid #c2c7d1;
+            border-radius: 8px;
+            background: #ffffff;
+        }
+
+        .readonly-table {
+            width: 100%;
+            min-width: 760px;
+            border-collapse: collapse;
+            table-layout: auto;
+        }
+
+        .readonly-table th,
+        .readonly-table td {
+            padding: 10px 12px;
+            border-right: 1px solid #e6e8ea;
+            border-bottom: 1px solid #e6e8ea;
+            text-align: left;
+            vertical-align: top;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .readonly-table th {
+            background: #d0e1fb;
+            color: #00355f;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .readonly-table tbody tr:hover td {
+            background: #f7f9fb;
+        }
+    
+        .sidebar-toggle {
+            position: fixed;
+            left: 184px;
+            top: 20px;
+            z-index: 80;
+            width: 36px;
+            height: 36px;
+            border: 1px solid #c2c7d1;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #00355f;
+            box-shadow: 0 8px 18px rgba(0, 53, 95, 0.16);
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            transition: left 0.2s ease, background 0.15s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: #d0e1fb;
+        }
+
+        aside {
+            transition: transform 0.2s ease;
+        }
+
+        body.sidebar-collapsed aside {
+            transform: translateX(-240px);
+        }
+
+        body.sidebar-collapsed .sidebar-toggle {
+            left: 12px;
+        }
     </style>
 
 </head>
 
 <body class="flex min-h-screen text-on-surface">
     <!-- SideNavBar -->
-    <aside
-        class="flex flex-col h-full py-base fixed left-0 top-0 h-screen w-[240px] z-50 bg-surface-container border-r border-outline-variant">
+            <aside
+        class="flex flex-col fixed left-0 top-0 h-screen w-[240px] z-50 bg-surface-container border-r border-outline-variant">
         <div class="px-6 py-8 flex flex-col gap-2">
             <div class="w-10 h-10 bg-primary rounded flex items-center justify-center text-on-primary">
                 <span class="material-symbols-outlined">corporate_fare</span>
             </div>
             <div>
-                <h2 class="text-headline-sm font-headline-sm font-bold text-primary">Instituto Federal de Varones</h2>
-                <p class="text-label-md text-on-surface-variant"><br></p>
+                <h2 class="text-xl font-bold leading-7 text-primary">Instituto Federal de Varones</h2>
+                <p class="text-xs text-on-surface-variant"><br></p>
             </div>
         </div>
         <nav class="flex-1 px-4 space-y-1">
             <a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container font-bold border-r-4 border-primary transition-all active:translate-x-1 duration-200"
                 href="resumen_de_interno.html">
                 <span class="material-symbols-outlined" data-icon="group">group</span>
-                <span class="font-body-md text-body-md">Resumen del Interno</span>
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
+                <span class="text-sm">Resumen del Interno</span>
+            </a>            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
                 href="alojamiento_general.html">
                 <span class="material-symbols-outlined" data-icon="home_work">home_work</span>
-                <span class="font-body-md text-body-md">Alojamiento Gral.</span>
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
+                <span class="text-sm">Alojamiento Gral.</span>
+            </a>            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
                 href="panel_de_visualizacion.html">
-                <span class="material-symbols-outlined" data-icon="dashboard"
-                    data-stitch-orig-opacity="0">dashboard</span>
-                <span class="font-body-md text-body-md">Panel de Visualización</span>
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
-                href="consejo_correccional.html">
+                <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                <span class="text-sm">Panel de Visualizacion</span>
+            </a>            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
+                href="consejo_correccional.html" target="_blank" rel="noopener noreferrer">
                 <span class="material-symbols-outlined" data-icon="gavel">gavel</span>
-                <span class="font-body-md text-body-md">Consejo Correccional</span>
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
+                <span class="text-sm">Consejo Correccional</span>
+            </a>            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
                 href="atenciones.html">
-                <span class="material-symbols-outlined" data-icon="medical_services">campaign</span>
-                <span class="font-body-md text-body-md">Atenciones</span>
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
+                <span class="material-symbols-outlined" data-icon="campaign">campaign</span>
+                <span class="text-sm">Atenciones</span>
+            </a>            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
                 href="parte_diario.html">
-                <span class="material-symbols-outlined" data-icon="campaign">history_edu</span>
-                <span class="font-body-md text-body-md">Parte Diario</span>
-            </a><a
-                class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
+                <span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+                <span class="text-sm">Parte Diario</span>
+            </a>            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
                 href="boleta_de_bajada.html">
                 <span class="material-symbols-outlined" data-icon="draw">draw</span>
-                <span class="font-body-md text-body-md">Boleta de Bajada</span>
-            </a>
-        </nav>
+                <span class="text-sm">Boleta de Bajada</span>
+            </a>        </nav>
         <div class="px-4 py-6 border-t border-outline-variant space-y-1">
             <a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-all"
                 href="#">
                 <span class="material-symbols-outlined" data-icon="settings">settings</span>
-                <span class="font-body-md text-body-md">Configuración</span>
+                <span class="text-sm">Configuracion</span>
             </a>
             <a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:bg-surface-container-high transition-all"
                 href="#">
                 <span class="material-symbols-outlined" data-icon="logout">logout</span>
-                <span class="font-body-md text-body-md">Cerrar Sesión</span>
+                <span class="text-sm">Cerrar Sesion</span>
             </a>
         </div>
     </aside>
+    <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Ocultar panel izquierdo" title="Ocultar panel izquierdo">
+        <span class="material-symbols-outlined">menu_open</span>
+    </button>
     <div class="ml-[240px] flex-1 flex flex-col">
         <!-- TopNavBar -->
         <header
             class="flex justify-between items-center w-full px-container-padding h-row-height-standard bg-surface border-b border-outline-variant shadow-sm sticky top-0 z-40">
             <div class="flex items-center gap-4">
-                <span class="text-headline-md font-headline-md font-bold text-primary">Sistema de Gestión de
-                    Internos</span>
+                <span class="text-headline-md font-headline-md font-bold text-primary">Sistema de Gestión de Internos</span>
             </div>
             <div class="flex-1 max-w-md mx-8">
                 <div class="relative group">
                     <span
                         class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
-                    <input
+                    <input id="lpu-search"
                         class="w-full pl-10 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-full text-body-md focus:outline-none focus:border-primary transition-colors"
-                        placeholder="Buscar interno con N° L.P.U." type="text">
+                        placeholder="Buscar por L.P.U. o apellido y nombre" type="text" autocomplete="off">
+                    <div id="search-suggestions" class="search-suggestions" role="listbox"></div>
                 </div>
             </div>
             <div class="flex items-center gap-4">
@@ -218,9 +418,9 @@
             <section
                 class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 flex flex-col md:flex-row gap-8 items-start">
                 <div class="relative group">
-                    <img alt="Foto del Empleado" class="rounded-xl object-cover shadow-md w-48 h-48"
-                        data-alt="Un retrato profesional de un empleado varón de mediana edad con expresión amable. Viste un polo corporativo azul. La iluminación es brillante y uniforme, típica de una configuración de estudio profesional, sobre un fondo gris claro neutro que se alinea con la estética de la interfaz corporativa minimalista. El ambiente general es de confianza y centrado en la precisión."
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMQsVU8bZX0SulMTnEcypLXxlQ_3dnnzSDuRGrNyTsm2Ec_J1f4YYHvV9C0o4vuWWJJu-G1j3xN4KUJjiDXKzLhKaCx9YqiDWI3Je6fIJbgP2wR34JwlwflRzxPuN-Hie926tejb9IecaTGv6wFZJ1_yl1vSuaraYf0AC0d0r_olzTX-QvfDQDavqCdoXVE5Yj2X2uDk8PZ7BXJ_x5_Hs_5zY6BeFlKHmF7lBKmjqhwHp6083uSUsJLtOy4jWbv6Y6KSsSkBRok7I">
+                    <div class="rounded-xl shadow-md w-48 h-48 bg-surface-container-high border border-outline-variant flex items-center justify-center overflow-hidden" aria-label="Silueta de persona sin rostro">
+                        <span class="material-symbols-outlined text-primary/60" style="font-size: 132px;">person</span>
+                    </div>
                     <button
                         class="absolute -bottom-2 -right-2 bg-primary text-on-primary p-2 rounded-lg shadow-lg hover:brightness-110 active:scale-90 transition-all">
                         <span class="material-symbols-outlined" data-icon="edit">edit</span>
@@ -229,20 +429,20 @@
                 <div class="flex-1 space-y-4">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h1 class="text-headline-lg font-headline-lg text-primary">Javier Alejandro Morales</h1>
-                            <p class="text-body-lg text-on-surface-variant font-medium">Supervisor Técnico Senior · ID:
-                                #EMP-88291</p>
+                            <h1 id="interno-nombre" class="text-headline-lg font-headline-lg text-primary">Buscar interno</h1>
+                            <p id="interno-subtitulo" class="text-body-lg text-on-surface-variant font-medium">Ingrese un N° L.P.U. para cargar los datos de la hoja internos.</p>
                         </div>
                         <div class="flex gap-2">
                             <span
-                                class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-label-md border border-green-200">ACTIVO</span>
+                                id="interno-situacion-badge"
+                                class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-label-md border border-green-200">SIN DATOS</span>
                             <span
-                                class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-label-md border border-outline-variant">DEPTO:
-                                OPERACIONES</span>
+                                id="interno-fase-badge"
+                                class="px-3 py-1 bg-primary-container text-on-primary-container rounded-full text-label-md border border-outline-variant">FASE: -</span>
                         </div>
                     </div>
                     <div
-                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 py-4 border-t border-outline-variant">
+                        class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 py-4 border-t border-outline-variant">
                         <div>
                             <span class="text-label-md text-on-surface-variant block mb-1">CORREO</span>
                             <span class="text-body-md font-semibold">j.morales@corp-ems.com</span>
@@ -260,10 +460,57 @@
                             <span class="text-body-md font-semibold">HQ Sur, Sitio B</span>
                         </div>
                     </div>
+                    <div
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 py-4 border-t border-outline-variant">
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">FECHA DE INGRESO</span>
+                            <span class="text-body-md font-semibold" data-field="FECHA DE INGRESO">-</span>
+                        </div>
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">PROCEDENCIA</span>
+                            <span class="text-body-md font-semibold" data-field="PROCEDENCIA">-</span>
+                        </div>
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">JUZGADO</span>
+                            <span class="text-body-md font-semibold" data-field="JUZGADO">-</span>
+                        </div>
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">DELITO</span>
+                            <span class="text-body-md font-semibold" data-field="DELITO">-</span>
+                        </div>
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">CONDUCTA</span>
+                            <span class="text-body-md font-semibold" data-field="CONDUCTA">-</span>
+                        </div>
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">CONCEPTO</span>
+                            <span class="text-body-md font-semibold" data-field="CONCEPTO">-</span>
+                        </div>
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">FASE</span>
+                            <span class="text-body-md font-semibold" data-field="FASE">-</span>
+                        </div>
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">DIRSUIC</span>
+                            <span class="text-body-md font-semibold" data-field="DIRSUIC">-</span>
+                        </div>
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">NACIONALIDAD</span>
+                            <span class="text-body-md font-semibold" data-field="NACIONALIDAD">-</span>
+                        </div>
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">EDAD</span>
+                            <span class="text-body-md font-semibold" data-field="EDAD">-</span>
+                        </div>
+                        <div>
+                            <span class="text-label-md text-on-surface-variant block mb-1">CATEGORIA</span>
+                            <span class="text-body-md font-semibold" data-field="CATEGORIA">-</span>
+                        </div>
+                    </div>
                 </div>
             </section>
             <!-- Detailed Management Sections -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+            <div id="topic-sections" class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
                 <!-- SITUACIÓN LEGAL -->
                 <section
                     class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
@@ -343,60 +590,7 @@
                             <span class="material-symbols-outlined text-[18px]">add</span> ACTUALIZAR ESTANCIA
                         </button>
                     </div>
-                    <div class="p-6 space-y-4">
-                        <div class="border rounded-lg border-outline-variant">
-                            <details class="group">
-                                <summary
-                                    class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
-                                    <div class="flex flex-col">
-                                        <span class="text-body-md font-bold">Complejo Residencial Sur - Unidad
-                                            402</span>
-                                        <span class="text-label-md text-on-surface-variant">Ocupación Actual · Desde
-                                            06/2022</span>
-                                    </div>
-                                    <span
-                                        class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
-                                </summary>
-                                <div class="p-4 bg-surface-container-lowest border-t border-outline-variant space-y-3">
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <span class="text-label-md text-on-surface-variant block">Fecha de
-                                                Entrada</span>
-                                            <span class="text-body-md">2022-06-01</span>
-                                        </div>
-                                        <div>
-                                            <span class="text-label-md text-on-surface-variant block">Estado</span>
-                                            <span class="text-body-md text-green-700 font-bold">Ocupado</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <span class="text-label-md text-on-surface-variant block">Notas</span>
-                                        <p class="text-body-md text-on-surface-variant italic">El empleado informó
-                                            necesidad de mantenimiento menor para el sistema HVAC en 12/2023. Resuelto.
-                                        </p>
-                                    </div>
-                                </div>
-                            </details>
-                        </div>
-                        <div class="border rounded-lg border-outline-variant opacity-60">
-                            <details class="group">
-                                <summary
-                                    class="list-none cursor-pointer p-4 flex justify-between items-center hover:bg-surface-container-low transition-colors">
-                                    <div class="flex flex-col">
-                                        <span class="text-body-md font-bold">Hotel de Tránsito Temporal - Ala B</span>
-                                        <span class="text-label-md text-on-surface-variant">Archivado · 03/2022 -
-                                            05/2022</span>
-                                    </div>
-                                    <span
-                                        class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
-                                </summary>
-                                <div class="p-4 bg-surface-container-lowest border-t border-outline-variant">
-                                    <p class="text-body-md text-on-surface-variant">Alojamiento temporal durante la fase
-                                        de reubicación. No se informaron problemas.</p>
-                                </div>
-                            </details>
-                        </div>
-                    </div>
+                    <div class="p-6 space-y-4" id="alojamiento-table-container"></div>
                 </section>
                 <!-- HISTORIAL DE ATENCIONES -->
                 <section
@@ -612,30 +806,627 @@
                     </div>
                 </section>
             </div>
-            <!-- Notes Section -->
-            <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-6">
-                <div class="flex items-center gap-3 mb-4">
-                    <span class="material-symbols-outlined text-primary">description</span>
-                    <h3 class="font-headline-sm text-headline-sm text-primary">Notas Administrativas Generales</h3>
-                </div>
-                <div class="space-y-4">
-                    <textarea
-                        class="w-full border border-outline-variant rounded-lg p-4 text-body-md focus:ring-2 focus:ring-primary focus:outline-none bg-surface-container-low"
-                        placeholder="Ingrese cualquier observación o comentario adicional sobre el historial o desempeño del empleado..."
-                        rows="4"></textarea>
-                    <div class="flex justify-end gap-3">
-                        <button
-                            class="px-6 py-2 text-secondary font-bold text-body-md hover:bg-surface-container-high rounded-lg transition-colors">Limpiar</button>
-                        <button
-                            class="px-6 py-2 bg-primary text-on-primary font-bold text-body-md rounded-lg shadow-sm hover:brightness-110 active:scale-95 transition-all">Guardar
-                            Cambios</button>
-                    </div>
-                </div>
-            </section>
         </main>
     </div>
 
 
+    <script>
+        const apiInternosEndpoint = window.location.protocol === "file:"
+            ? "http://127.0.0.1:8780/api/internos"
+            : "/api/internos";
+        const apiAlojamientoEndpoint = window.location.protocol === "file:"
+            ? "http://127.0.0.1:8780/api/alojamiento"
+            : "/api/alojamiento";
+        const apiConsejoEndpoint = window.location.protocol === "file:"
+            ? "http://127.0.0.1:8780/api/consejo"
+            : "/api/consejo";
+
+        const lpuSearchInput = document.querySelector("#lpu-search");
+        const searchSuggestions = document.querySelector("#search-suggestions");
+        const internoNombre = document.querySelector("#interno-nombre");
+        const internoSubtitulo = document.querySelector("#interno-subtitulo");
+        const situacionBadge = document.querySelector("#interno-situacion-badge");
+        const faseBadge = document.querySelector("#interno-fase-badge");
+        const resumenFields = Array.from(document.querySelectorAll("[data-field]"));
+
+        let internosHeaders = [];
+        let internosRows = [];
+        let currentSuggestions = [];
+        let activeSuggestionIndex = -1;
+        let selectedInterno = null;
+        let alojamientoHeaders = [];
+        let alojamientoRows = [];
+        let consejoHeaders = [];
+        let consejoRows = [];
+
+        const normalizeText = (value) => String(value || "")
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+
+        const normalizeKey = (value) => normalizeText(value).replace(/[^a-z0-9]/g, "");
+        const normalizeLpu = (value) => String(value || "").replace(/[^0-9]/g, "");
+
+        const headerIndex = (headerName) => {
+            const target = normalizeKey(headerName);
+            return internosHeaders.findIndex((header) => normalizeKey(header) === target);
+        };
+
+        const valueFor = (row, headerName) => {
+            const index = headerIndex(headerName);
+            return index >= 0 ? String(row[index] || "").trim() : "";
+        };
+
+        const setStatus = (message) => {
+            if (internoSubtitulo) internoSubtitulo.textContent = message;
+        };
+
+        const resetResumen = () => {
+            selectedInterno = null;
+            if (internoNombre) internoNombre.textContent = "Buscar interno";
+            if (situacionBadge) situacionBadge.textContent = "SIN DATOS";
+            if (faseBadge) faseBadge.textContent = "FASE: -";
+            resumenFields.forEach((field) => {
+                field.textContent = "-";
+            });
+            clearDynamicTopicTables();
+        };
+
+        const renderInterno = (row) => {
+            const nombre = valueFor(row, "APELLIDO Y NOMBRE") || "Interno sin nombre";
+            const lpu = valueFor(row, "L.P.U.");
+            const situacionLegal = valueFor(row, "SITUACION LEGAL");
+            const fase = valueFor(row, "FASE");
+            selectedInterno = { row, nombre, lpu };
+
+            if (internoNombre) internoNombre.textContent = nombre;
+            setStatus(`L.P.U. ${lpu || "-"} · ${situacionLegal || "Sin situación legal"}`);
+            if (situacionBadge) situacionBadge.textContent = situacionLegal || "SIN DATOS";
+            if (faseBadge) faseBadge.textContent = `FASE: ${fase || "-"}`;
+
+            resumenFields.forEach((field) => {
+                const headerName = field.dataset.field;
+                field.textContent = valueFor(row, headerName) || "-";
+            });
+        };
+
+        const findInternoByLpu = (lpu) => {
+            const lpuIndex = headerIndex("L.P.U.");
+            const wanted = normalizeLpu(lpu);
+            if (lpuIndex < 0 || !wanted) return null;
+            return internosRows.find((row) => normalizeLpu(row[lpuIndex]) === wanted);
+        };
+
+        const hideSuggestions = () => {
+            currentSuggestions = [];
+            activeSuggestionIndex = -1;
+            if (searchSuggestions) {
+                searchSuggestions.classList.remove("visible");
+                searchSuggestions.innerHTML = "";
+            }
+        };
+
+        const setActiveSuggestion = (index) => {
+            if (!searchSuggestions || !currentSuggestions.length) return;
+            activeSuggestionIndex = Math.max(0, Math.min(index, currentSuggestions.length - 1));
+            Array.from(searchSuggestions.querySelectorAll(".suggestion-option")).forEach((button, buttonIndex) => {
+                button.classList.toggle("active", buttonIndex === activeSuggestionIndex);
+            });
+        };
+
+        const selectInterno = (row) => {
+            hideSuggestions();
+            renderInterno(row);
+            refreshActiveTopic();
+            if (lpuSearchInput) {
+                lpuSearchInput.value = "";
+                lpuSearchInput.focus();
+            }
+        };
+
+        const renderSuggestions = (query = "") => {
+            if (!searchSuggestions) return;
+
+            const trimmedQuery = query.trim();
+            if (!trimmedQuery) {
+                hideSuggestions();
+                return;
+            }
+
+            const lpuIndex = headerIndex("L.P.U.");
+            const nameIndex = headerIndex("APELLIDO Y NOMBRE");
+            const normalizedQuery = normalizeText(trimmedQuery);
+            const normalizedLpuQuery = normalizeLpu(trimmedQuery);
+
+            currentSuggestions = internosRows
+                .filter((row) => {
+                    const lpu = lpuIndex >= 0 ? String(row[lpuIndex] || "") : "";
+                    const name = nameIndex >= 0 ? String(row[nameIndex] || "") : "";
+                    return normalizeText(name).includes(normalizedQuery)
+                        || (normalizedLpuQuery && normalizeLpu(lpu).includes(normalizedLpuQuery));
+                })
+                .slice(0, 12);
+
+            if (!currentSuggestions.length) {
+                searchSuggestions.innerHTML = `
+                    <div class="suggestion-option" role="option">
+                        <span class="suggestion-name">Sin coincidencias</span>
+                        <span class="suggestion-meta">Busque por L.P.U. o apellido y nombre</span>
+                    </div>`;
+                searchSuggestions.classList.add("visible");
+                activeSuggestionIndex = -1;
+                return;
+            }
+
+            searchSuggestions.innerHTML = "";
+            currentSuggestions.forEach((row, index) => {
+                const nombre = valueFor(row, "APELLIDO Y NOMBRE") || "Sin nombre";
+                const lpu = valueFor(row, "L.P.U.") || "-";
+                const situacion = valueFor(row, "SITUACION LEGAL") || "Sin situación";
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "suggestion-option";
+                button.setAttribute("role", "option");
+
+                const nameSpan = document.createElement("span");
+                nameSpan.className = "suggestion-name";
+                nameSpan.textContent = nombre;
+
+                const metaSpan = document.createElement("span");
+                metaSpan.className = "suggestion-meta";
+                metaSpan.textContent = `L.P.U. ${lpu} · ${situacion}`;
+
+                button.append(nameSpan, metaSpan);
+                button.addEventListener("mousedown", (event) => {
+                    event.preventDefault();
+                    selectInterno(row);
+                });
+                button.addEventListener("mouseenter", () => setActiveSuggestion(index));
+                searchSuggestions.appendChild(button);
+            });
+
+            searchSuggestions.classList.add("visible");
+            setActiveSuggestion(0);
+        };
+
+        const findInternoBySearch = (searchValue) => {
+            const query = String(searchValue || "").trim();
+            const normalizedQuery = normalizeText(query);
+            const normalizedLpuQuery = normalizeLpu(query);
+            const lpuIndex = headerIndex("L.P.U.");
+            const nameIndex = headerIndex("APELLIDO Y NOMBRE");
+
+            if (!query) return null;
+
+            return internosRows.find((row) => {
+                const lpu = lpuIndex >= 0 ? String(row[lpuIndex] || "") : "";
+                const name = nameIndex >= 0 ? String(row[nameIndex] || "") : "";
+                return normalizeLpu(lpu) === normalizedLpuQuery
+                    || normalizeText(name) === normalizedQuery;
+            }) || currentSuggestions[0] || null;
+        };
+
+        const loadInternos = async () => {
+            const response = await fetch(apiInternosEndpoint);
+            if (!response.ok) throw new Error("No se pudo leer la hoja internos.");
+            const data = await response.json();
+            internosHeaders = data.headers || [];
+            internosRows = data.rows || [];
+        };
+
+        const loadAlojamiento = async () => {
+            const response = await fetch(apiAlojamientoEndpoint);
+            if (!response.ok) throw new Error("No se pudo leer la hoja ALOJAMIENTO.");
+            const data = await response.json();
+            alojamientoHeaders = data.headers || [];
+            alojamientoRows = data.rows || [];
+        };
+
+        const loadConsejo = async () => {
+            const response = await fetch(apiConsejoEndpoint);
+            if (!response.ok) throw new Error("No se pudo leer la hoja consejo.");
+            const data = await response.json();
+            consejoHeaders = data.headers || [];
+            consejoRows = data.rows || [];
+        };
+
+        const headerIndexIn = (headers, candidates) => {
+            const keys = candidates.map(normalizeKey);
+            return headers.findIndex((header) => keys.includes(normalizeKey(header)));
+        };
+
+        const valueFromHeaders = (headers, row, candidates) => {
+            const index = headerIndexIn(headers, candidates);
+            return index >= 0 ? String(row[index] || "").trim() : "";
+        };
+
+        const findAlojamientoMatches = () => {
+            if (!selectedInterno) return [];
+
+            const selectedLpu = normalizeLpu(selectedInterno.lpu);
+            const selectedName = normalizeText(selectedInterno.nombre);
+            const lpuIndex = headerIndexIn(alojamientoHeaders, ["L.P.U.", "L.P.U", "LPU"]);
+            const nameIndex = headerIndexIn(alojamientoHeaders, ["APELLIDO Y NOMBRE", "INTERNO", "NOMBRE"]);
+
+            return alojamientoRows.filter((row) => {
+                const rowLpu = lpuIndex >= 0 ? normalizeLpu(row[lpuIndex]) : "";
+                const rowName = nameIndex >= 0 ? normalizeText(row[nameIndex]) : "";
+                return (selectedLpu && rowLpu === selectedLpu)
+                    || (selectedName && rowName === selectedName);
+            });
+        };
+
+        const findConsejoMatches = () => {
+            if (!selectedInterno) return [];
+
+            const selectedLpu = normalizeLpu(selectedInterno.lpu);
+            const lpuIndex = headerIndexIn(consejoHeaders, ["L.P.U. N°", "L.P.U. N", "L.P.U.", "LPU"]);
+
+            if (lpuIndex < 0 || !selectedLpu) return [];
+
+            return consejoRows.filter((row) => normalizeLpu(row[lpuIndex]) === selectedLpu);
+        };
+
+        const getTopicSection = (title) => Array.from(document.querySelectorAll("#topic-sections > section")).find((candidate) =>
+            normalizeKey(candidate.querySelector("h3")?.textContent || "") === normalizeKey(title)
+        );
+
+        const setTopicMessage = (title, message) => {
+            const section = getTopicSection(title);
+            const body = section?.querySelector(".p-6.space-y-4");
+            if (!body) return;
+            body.innerHTML = "";
+            const box = document.createElement("div");
+            box.className = "rounded-lg border border-outline-variant bg-surface-container-lowest p-4 text-body-md text-on-surface-variant";
+            box.textContent = message;
+            body.appendChild(box);
+        };
+
+        const setAlojamientoMessage = (message) => {
+            setTopicMessage("HISTORIAL DE ALOJAMIENTO", message);
+        };
+
+        const setConsejoMessage = (message) => {
+            setTopicMessage("SITUACIÓN LEGAL", message);
+        };
+
+        const clearTopicBody = (title) => {
+            const body = getTopicSection(title)?.querySelector(".p-6.space-y-4");
+            if (body) body.innerHTML = "";
+        };
+
+        const clearAlojamientoTable = () => {
+            clearTopicBody("HISTORIAL DE ALOJAMIENTO");
+        };
+
+        const clearConsejoTable = () => {
+            clearTopicBody("SITUACIÓN LEGAL");
+        };
+
+        const clearDynamicTopicTables = () => {
+            clearAlojamientoTable();
+            clearConsejoTable();
+        };
+
+        const getActiveTopicLabel = () => {
+            const activeTab = document.querySelector(".topic-tab.active span:first-child");
+            return activeTab?.textContent?.trim() || "";
+        };
+
+        const refreshActiveTopic = () => {
+            clearDynamicTopicTables();
+            const activeTopic = getActiveTopicLabel();
+            if (activeTopic === "ALOJAMIENTO") {
+                loadSelectedAlojamiento();
+            } else if (activeTopic === "TRAMITES INTERDISCIPLINARIOS") {
+                loadSelectedConsejo();
+            }
+        };
+
+        const renderReadOnlyTable = (title, headers, rows, emptyMessage, tableLabel) => {
+            const section = Array.from(document.querySelectorAll("#topic-sections > section")).find((candidate) =>
+                normalizeKey(candidate.querySelector("h3")?.textContent || "") === normalizeKey(title)
+            );
+            const body = section?.querySelector(".p-6.space-y-4");
+            if (!body) return;
+            body.innerHTML = "";
+
+            if (!rows.length) {
+                setTopicMessage(title, emptyMessage);
+                return;
+            }
+
+            const tableWrap = document.createElement("div");
+            tableWrap.className = "readonly-table-wrap";
+
+            const table = document.createElement("table");
+            table.className = "readonly-table";
+            table.setAttribute("aria-label", tableLabel);
+
+            const thead = document.createElement("thead");
+            const headerRow = document.createElement("tr");
+            headers.forEach((header) => {
+                const th = document.createElement("th");
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+
+            const tbody = document.createElement("tbody");
+            rows.forEach((row) => {
+                const tr = document.createElement("tr");
+                headers.forEach((_, colIdx) => {
+                    const td = document.createElement("td");
+                    td.textContent = String(row[colIdx] || "").trim();
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+
+            table.append(thead, tbody);
+            tableWrap.appendChild(table);
+            body.appendChild(tableWrap);
+        };
+
+        const renderAlojamientoMatches = (matches) => {
+            renderReadOnlyTable(
+                "HISTORIAL DE ALOJAMIENTO",
+                alojamientoHeaders,
+                matches,
+                "No se encontraron registros de alojamiento para el interno seleccionado.",
+                "Alojamiento filtrado del interno seleccionado"
+            );
+        };
+
+        const renderConsejoMatches = (matches) => {
+            const visibleColumnCount = 7;
+            renderReadOnlyTable(
+                "SITUACIÓN LEGAL",
+                consejoHeaders.slice(0, visibleColumnCount),
+                matches.map((row) => row.slice(0, visibleColumnCount)),
+                "No se encontraron tramites interdisciplinarios para el interno seleccionado.",
+                "Tramites interdisciplinarios filtrados del interno seleccionado"
+            );
+        };
+
+        const loadSelectedAlojamiento = async () => {
+            if (!selectedInterno) {
+                setAlojamientoMessage("Seleccione un interno desde el buscador para filtrar la hoja ALOJAMIENTO.");
+                return;
+            }
+
+            try {
+                setAlojamientoMessage("Cargando alojamiento del interno seleccionado...");
+                if (!alojamientoRows.length) await loadAlojamiento();
+                renderAlojamientoMatches(findAlojamientoMatches());
+            } catch (error) {
+                setAlojamientoMessage("No se pudo cargar la hoja ALOJAMIENTO. Verifique que el servidor local este iniciado y que exista la hoja.");
+            }
+        };
+
+        const loadSelectedConsejo = async () => {
+            if (!selectedInterno) {
+                setConsejoMessage("Seleccione un interno desde el buscador para filtrar la hoja consejo.");
+                return;
+            }
+
+            try {
+                setConsejoMessage("Cargando tramites interdisciplinarios del interno seleccionado...");
+                if (!consejoRows.length) await loadConsejo();
+                renderConsejoMatches(findConsejoMatches());
+            } catch (error) {
+                setConsejoMessage("No se pudo cargar la hoja consejo. Verifique que el servidor local este iniciado.");
+            }
+        };
+
+        const searchInterno = async () => {
+            const searchValue = lpuSearchInput?.value.trim();
+            if (!searchValue) {
+                resetResumen();
+                setStatus("Ingrese un N° L.P.U. o apellido y nombre para cargar los datos de la hoja internos.");
+                hideSuggestions();
+                return;
+            }
+
+            try {
+                setStatus("Buscando interno...");
+                if (!internosRows.length) {
+                    await loadInternos();
+                }
+
+                const interno = findInternoBySearch(searchValue);
+                if (!interno) {
+                    resetResumen();
+                    setStatus(`No se encontro un interno con "${searchValue}".`);
+                    hideSuggestions();
+                    return;
+                }
+
+                selectInterno(interno);
+            } catch (error) {
+                resetResumen();
+                setStatus("No se pudo cargar la hoja internos. Verifique que el servidor local este iniciado.");
+                hideSuggestions();
+            }
+        };
+
+        lpuSearchInput?.addEventListener("focus", async () => {
+            try {
+                if (!internosRows.length) await loadInternos();
+                renderSuggestions(lpuSearchInput.value);
+            } catch (error) {
+                setStatus("No se pudo cargar la hoja internos. Verifique que el servidor local este iniciado.");
+            }
+        });
+
+        lpuSearchInput?.addEventListener("input", async () => {
+            try {
+                if (!internosRows.length) await loadInternos();
+                renderSuggestions(lpuSearchInput.value);
+            } catch (error) {
+                hideSuggestions();
+                setStatus("No se pudo cargar la hoja internos. Verifique que el servidor local este iniciado.");
+            }
+        });
+
+        lpuSearchInput?.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowDown" && currentSuggestions.length) {
+                event.preventDefault();
+                setActiveSuggestion(activeSuggestionIndex + 1);
+            } else if (event.key === "ArrowUp" && currentSuggestions.length) {
+                event.preventDefault();
+                setActiveSuggestion(activeSuggestionIndex - 1);
+            } else if (event.key === "Enter") {
+                event.preventDefault();
+                if (currentSuggestions[activeSuggestionIndex]) {
+                    selectInterno(currentSuggestions[activeSuggestionIndex]);
+                } else {
+                    searchInterno();
+                }
+            } else if (event.key === "Escape") {
+                hideSuggestions();
+            }
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!event.target.closest("#lpu-search") && !event.target.closest("#search-suggestions")) {
+                hideSuggestions();
+            }
+        });
+
+        const setupTopicDropdowns = () => {
+            const topicContainer = document.querySelector("#topic-sections");
+            if (!topicContainer) return;
+
+            const allSections = Array.from(topicContainer.querySelectorAll(":scope > section"));
+            if (!allSections.length) return;
+
+            allSections.forEach((section) => {
+                const body = section.querySelector(".p-6.space-y-4");
+                if (body && body.id !== "alojamiento-table-container") {
+                    body.innerHTML = "";
+                    section.classList.add("empty-topic");
+                }
+            });
+
+            const desiredTopics = [
+                { label: "NOVEDADES", sourceTitle: "ATENCIONES" },
+                { label: "ALOJAMIENTO", sourceTitle: "HISTORIAL DE ALOJAMIENTO" },
+                { label: "TRAMITES INTERDISCIPLINARIOS", sourceTitle: "SITUACIÓN LEGAL" },
+                { label: "SANCIONES", sourceTitle: "HISTORIAL DE SANCIONES" },
+                { label: "HISTORIAL DE ATENCIONES", sourceTitle: "HISTORIAL DE ATENCIONES" },
+                { label: "CALIFICACIONES", sourceTitle: "HISTORIAL DE CALIFICACIONES" },
+            ];
+
+            allSections.forEach((section) => section.classList.add("topic-section"));
+
+            const sections = desiredTopics
+                .map((topic) => {
+                    const section = allSections.find((candidate) =>
+                        normalizeKey(candidate.querySelector("h3")?.textContent || "") === normalizeKey(topic.sourceTitle)
+                    );
+                    return section ? { ...topic, section } : null;
+                })
+                .filter(Boolean);
+
+            if (!sections.length) return;
+
+            topicContainer.className = "topics-horizontal";
+
+            const tabs = document.createElement("div");
+            tabs.className = "topics-tabs";
+            tabs.setAttribute("aria-label", "Secciones del resumen");
+
+            const closeAll = () => {
+                allSections.forEach((section) => section.classList.remove("active"));
+                tabs.querySelectorAll(".topic-tab").forEach((tab) => {
+                    tab.classList.remove("active");
+                    tab.setAttribute("aria-expanded", "false");
+                });
+            };
+
+            sections.forEach(({ label, section }, index) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "topic-tab";
+                button.setAttribute("aria-expanded", "false");
+                button.innerHTML = `<span>${label}</span><span class="material-symbols-outlined">expand_more</span>`;
+                button.addEventListener("click", () => {
+                    const isOpen = section.classList.contains("active");
+                    closeAll();
+                    if (!isOpen) {
+                        section.classList.remove("empty-topic");
+                        section.classList.add("active");
+                        button.classList.add("active");
+                        button.setAttribute("aria-expanded", "true");
+                        if (label === "ALOJAMIENTO") {
+                            loadSelectedAlojamiento();
+                        } else if (label === "TRAMITES INTERDISCIPLINARIOS") {
+                            loadSelectedConsejo();
+                        }
+                    }
+                });
+
+                tabs.appendChild(button);
+
+                if (index === 0) {
+                    section.classList.add("active");
+                    button.classList.add("active");
+                    button.setAttribute("aria-expanded", "true");
+                }
+            });
+
+            topicContainer.prepend(tabs);
+        };
+
+        setupTopicDropdowns();
+
+        document.querySelectorAll("[data-field]").forEach((field) => {
+            const label = field.previousElementSibling;
+            if (label) label.classList.add("summary-field-label");
+        });
+
+        const initialLpu = new URLSearchParams(window.location.search).get("lpu");
+        if (initialLpu && lpuSearchInput) {
+            lpuSearchInput.value = initialLpu;
+            searchInterno();
+        }
+    </script>
+
+    <script id="sidebar-toggle-script">
+        (() => {
+            const button = document.querySelector("#sidebar-toggle");
+            const aside = document.querySelector("aside");
+            const content = aside?.nextElementSibling?.id === "sidebar-toggle"
+                ? aside.nextElementSibling.nextElementSibling
+                : aside?.nextElementSibling;
+            const icon = button?.querySelector(".material-symbols-outlined");
+            if (!button || !aside || !content) return;
+
+            const setCollapsed = (collapsed) => {
+                document.body.classList.toggle("sidebar-collapsed", collapsed);
+                content.style.marginLeft = collapsed ? "0" : "240px";
+                button.setAttribute("aria-label", collapsed ? "Mostrar panel izquierdo" : "Ocultar panel izquierdo");
+                button.title = collapsed ? "Mostrar panel izquierdo" : "Ocultar panel izquierdo";
+                if (icon) icon.textContent = collapsed ? "menu" : "menu_open";
+                localStorage.setItem("ifv-sidebar-collapsed", collapsed ? "1" : "0");
+            };
+
+            setCollapsed(localStorage.getItem("ifv-sidebar-collapsed") === "1");
+            button.addEventListener("click", () => {
+                setCollapsed(!document.body.classList.contains("sidebar-collapsed"));
+            });
+        })();
+    </script>
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
