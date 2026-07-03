@@ -820,6 +820,9 @@
         const apiConsejoEndpoint = window.location.protocol === "file:"
             ? "http://127.0.0.1:8780/api/consejo"
             : "/api/consejo";
+        const apiSancionesEndpoint = window.location.protocol === "file:"
+            ? "http://127.0.0.1:8780/api/sanciones"
+            : "/api/sanciones";
 
         const lpuSearchInput = document.querySelector("#lpu-search");
         const searchSuggestions = document.querySelector("#search-suggestions");
@@ -838,6 +841,8 @@
         let alojamientoRows = [];
         let consejoHeaders = [];
         let consejoRows = [];
+        let sancionesHeaders = [];
+        let sancionesRows = [];
 
         const normalizeText = (value) => String(value || "")
             .toLowerCase()
@@ -1030,6 +1035,14 @@
             consejoRows = data.rows || [];
         };
 
+        const loadSanciones = async () => {
+            const response = await fetch(apiSancionesEndpoint);
+            if (!response.ok) throw new Error("No se pudo leer la hoja SANCIONES_RESUELTA.");
+            const data = await response.json();
+            sancionesHeaders = data.headers || [];
+            sancionesRows = data.rows || [];
+        };
+
         const headerIndexIn = (headers, candidates) => {
             const keys = candidates.map(normalizeKey);
             return headers.findIndex((header) => keys.includes(normalizeKey(header)));
@@ -1067,6 +1080,22 @@
             return consejoRows.filter((row) => normalizeLpu(row[lpuIndex]) === selectedLpu);
         };
 
+        const findSancionesMatches = () => {
+            if (!selectedInterno) return [];
+
+            const selectedLpu = normalizeLpu(selectedInterno.lpu);
+            const selectedName = normalizeText(selectedInterno.nombre);
+            const lpuIndex = headerIndexIn(sancionesHeaders, ["LPU", "L.P.U.", "L.P.U", "L.P.U. N°", "L.P.U. N"]);
+            const nameIndex = headerIndexIn(sancionesHeaders, ["INTERNO", "APELLIDO Y NOMBRE", "NOMBRE"]);
+
+            return sancionesRows.filter((row) => {
+                const rowLpu = lpuIndex >= 0 ? normalizeLpu(row[lpuIndex]) : "";
+                const rowName = nameIndex >= 0 ? normalizeText(row[nameIndex]) : "";
+                return (selectedLpu && rowLpu === selectedLpu)
+                    || (selectedName && rowName === selectedName);
+            });
+        };
+
         const getTopicSection = (title) => Array.from(document.querySelectorAll("#topic-sections > section")).find((candidate) =>
             normalizeKey(candidate.querySelector("h3")?.textContent || "") === normalizeKey(title)
         );
@@ -1090,6 +1119,10 @@
             setTopicMessage("SITUACIÓN LEGAL", message);
         };
 
+        const setSancionesMessage = (message) => {
+            setTopicMessage("HISTORIAL DE SANCIONES", message);
+        };
+
         const clearTopicBody = (title) => {
             const body = getTopicSection(title)?.querySelector(".p-6.space-y-4");
             if (body) body.innerHTML = "";
@@ -1103,9 +1136,14 @@
             clearTopicBody("SITUACIÓN LEGAL");
         };
 
+        const clearSancionesTable = () => {
+            clearTopicBody("HISTORIAL DE SANCIONES");
+        };
+
         const clearDynamicTopicTables = () => {
             clearAlojamientoTable();
             clearConsejoTable();
+            clearSancionesTable();
         };
 
         const getActiveTopicLabel = () => {
@@ -1120,6 +1158,8 @@
                 loadSelectedAlojamiento();
             } else if (activeTopic === "TRAMITES INTERDISCIPLINARIOS") {
                 loadSelectedConsejo();
+            } else if (activeTopic === "SANCIONES") {
+                loadSelectedSanciones();
             }
         };
 
@@ -1189,6 +1229,16 @@
             );
         };
 
+        const renderSancionesMatches = (matches) => {
+            renderReadOnlyTable(
+                "HISTORIAL DE SANCIONES",
+                sancionesHeaders,
+                matches,
+                "No se encontraron sanciones en SANCIONES_RESUELTA para el interno seleccionado.",
+                "Sanciones filtradas del interno seleccionado"
+            );
+        };
+
         const loadSelectedAlojamiento = async () => {
             if (!selectedInterno) {
                 setAlojamientoMessage("Seleccione un interno desde el buscador para filtrar la hoja ALOJAMIENTO.");
@@ -1216,6 +1266,21 @@
                 renderConsejoMatches(findConsejoMatches());
             } catch (error) {
                 setConsejoMessage("No se pudo cargar la hoja consejo. Verifique que el servidor local este iniciado.");
+            }
+        };
+
+        const loadSelectedSanciones = async () => {
+            if (!selectedInterno) {
+                setSancionesMessage("Seleccione un interno desde el buscador para filtrar la hoja SANCIONES_RESUELTA.");
+                return;
+            }
+
+            try {
+                setSancionesMessage("Cargando sanciones desde SANCIONES_RESUELTA...");
+                if (!sancionesRows.length) await loadSanciones();
+                renderSancionesMatches(findSancionesMatches());
+            } catch (error) {
+                setSancionesMessage("No se pudo cargar la hoja SANCIONES_RESUELTA. Verifique que el servidor local este iniciado.");
             }
         };
 
@@ -1363,6 +1428,8 @@
                             loadSelectedAlojamiento();
                         } else if (label === "TRAMITES INTERDISCIPLINARIOS") {
                             loadSelectedConsejo();
+                        } else if (label === "SANCIONES") {
+                            loadSelectedSanciones();
                         }
                     }
                 });
