@@ -82,11 +82,14 @@ Endpoints principales:
 - `GET /api/interno`: obtiene internos.
 - `GET /api/interno?lpu=...`: busca un interno por LPU.
 - `GET /api/personal-complejo`: obtiene opciones de personal y funciones.
+- `GET /api/alojamiento`: obtiene datos de alojamiento.
+- `GET /api/novedades`: obtiene novedades.
 - `GET /api/tramites`: obtiene tramites configurados.
 - `POST /api/tramites`: agrega un tramite.
 - `PUT /api/tramites`: reemplaza la lista de tramites.
 - `GET /api/archivo`: obtiene archivos guardados.
 - `POST /api/archivo`: guarda HTML u otro contenido archivado.
+- `GET /api/parte-diario-config`: obtiene configuracion auxiliar para el parte diario.
 - `GET /api/parte-diario-actual`: obtiene el parte diario actual.
 - `PUT /api/parte-diario-actual`: guarda el parte diario actual.
 - `GET /api/parte-diario-archivado`: obtiene el ultimo parte diario archivado.
@@ -98,6 +101,7 @@ Endpoints principales:
 - `PUT /api/config/centro-evaluacion-procesados`: actualiza configuracion del CEIP.
 - `GET /api/config/sanciones-articulos`: obtiene opciones de articulos para sanciones.
 - `GET /api/config/sanciones-calificaciones`: obtiene opciones de calificaciones para sanciones.
+- `GET /api/config/sancion-acta`: obtiene el texto de sancion configurado para actas.
 
 ## Fuente de datos
 
@@ -159,12 +163,12 @@ Requisitos:
 - Acceso a internet para consultar Google Sheets y, si corresponde, Groq.
 - Credenciales validas de Google.
 
-Como no hay `package.json` actualmente, no hay dependencias npm declaradas. El servidor usa modulos nativos de Node.
+El servidor usa modulos nativos de Node y no requiere instalar dependencias npm.
 
 Para correr localmente:
 
 ```bash
-node server.js
+npm run dev
 ```
 
 Luego abrir:

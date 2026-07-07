@@ -10,6 +10,7 @@ const CONFIG_SANCIONES_CALIFICACIONES_RANGE = "Configuracion!S:S";
 const INTERNOS_RANGE = "internos";
 const PERSONAL_COMPLEJO_RANGE = "PERSONAL_COMPLEJO!E:F";
 const SANCIONES_RANGE = "'SANCIONES_RESUELTA'!A:S";
+const ALOJAMIENTO_RANGE = "ALOJAMIENTO";
 const SHEET_ID = 0;
 const ARCHIVO_SHEET = "archivo";
 const ARCHIVO_RANGE = "'archivo'!A:C";
@@ -478,6 +479,11 @@ const getPersonalComplejoOptions = async () => {
     funciones: uniqueSortedValues(rows.map((row) => row[1])),
     cachedAt: new Date().toISOString(),
   };
+};
+
+const getAlojamientoRows = async () => {
+  const values = await getSheetValues(ALOJAMIENTO_RANGE);
+  return rowsFromSheetValues(values);
 };
 
 const getNovedadesRows = async () => {
@@ -1202,6 +1208,7 @@ module.exports = {
   updateConsejoRow,
   deleteConsejoRow,
   getPersonalComplejoOptions,
+  getAlojamientoRows,
   getNovedadesRows,
   findInternoByLpu,
   getSancionesRows,
