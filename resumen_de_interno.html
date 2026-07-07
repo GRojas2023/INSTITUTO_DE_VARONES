@@ -659,7 +659,7 @@
                         class="p-6 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary" data-icon="campaign">campaign</span>
-                            <h3 class="font-headline-sm text-headline-sm text-primary">ATENCIONES</h3>
+                            <h3 class="font-headline-sm text-headline-sm text-primary">NOVEDADES</h3>
                         </div>
                         <button class="flex items-center gap-1 text-primary hover:underline text-label-md font-bold">
                             <span class="material-symbols-outlined text-[18px]">add</span> NUEVA ENTRADA
@@ -823,6 +823,9 @@
         const apiSancionesEndpoint = window.location.protocol === "file:"
             ? "http://127.0.0.1:8780/api/sanciones"
             : "/api/sanciones";
+        const apiNovedadesEndpoint = window.location.protocol === "file:"
+            ? "http://127.0.0.1:8780/api/novedades"
+            : "/api/novedades";
 
         const lpuSearchInput = document.querySelector("#lpu-search");
         const searchSuggestions = document.querySelector("#search-suggestions");
@@ -843,6 +846,8 @@
         let consejoRows = [];
         let sancionesHeaders = [];
         let sancionesRows = [];
+        let novedadesHeaders = [];
+        let novedadesRows = [];
 
         const normalizeText = (value) => String(value || "")
             .toLowerCase()
@@ -850,7 +855,7 @@
             .replace(/[\u0300-\u036f]/g, "");
 
         const normalizeKey = (value) => normalizeText(value).replace(/[^a-z0-9]/g, "");
-        const normalizeLpu = (value) => String(value || "").replace(/[^0-9]/g, "");
+        const normalizeLpu = (value) => String(value || "").trim().replace(/[.,]00$/, "").replace(/[^0-9]/g, "");
 
         const headerIndex = (headerName) => {
             const target = normalizeKey(headerName);
@@ -1043,6 +1048,14 @@
             sancionesRows = data.rows || [];
         };
 
+        const loadNovedades = async () => {
+            const response = await fetch(apiNovedadesEndpoint);
+            if (!response.ok) throw new Error("No se pudo leer la hoja NOVEDADES.");
+            const data = await response.json();
+            novedadesHeaders = data.headers || [];
+            novedadesRows = data.rows || [];
+        };
+
         const headerIndexIn = (headers, candidates) => {
             const keys = candidates.map(normalizeKey);
             return headers.findIndex((header) => keys.includes(normalizeKey(header)));
@@ -1096,6 +1109,22 @@
             });
         };
 
+        const findNovedadesMatches = () => {
+            if (!selectedInterno) return [];
+
+            const selectedLpu = normalizeLpu(selectedInterno.lpu);
+            const selectedName = normalizeText(selectedInterno.nombre);
+            const lpuIndex = headerIndexIn(novedadesHeaders, ["LPU NÂ°", "LPU N", "L.P.U. NÂ°", "L.P.U. N", "LPU", "L.P.U."]);
+            const nameIndex = headerIndexIn(novedadesHeaders, ["APELLIDO Y NOMBRE", "INTERNO", "NOMBRE"]);
+
+            return novedadesRows.filter((row) => {
+                const rowLpu = lpuIndex >= 0 ? normalizeLpu(row[lpuIndex]) : "";
+                const rowName = nameIndex >= 0 ? normalizeText(row[nameIndex]) : "";
+                return (selectedLpu && rowLpu === selectedLpu)
+                    || (selectedName && rowName === selectedName);
+            });
+        };
+
         const getTopicSection = (title) => Array.from(document.querySelectorAll("#topic-sections > section")).find((candidate) =>
             normalizeKey(candidate.querySelector("h3")?.textContent || "") === normalizeKey(title)
         );
@@ -1123,6 +1152,10 @@
             setTopicMessage("HISTORIAL DE SANCIONES", message);
         };
 
+        const setNovedadesMessage = (message) => {
+            setTopicMessage("NOVEDADES", message);
+        };
+
         const clearTopicBody = (title) => {
             const body = getTopicSection(title)?.querySelector(".p-6.space-y-4");
             if (body) body.innerHTML = "";
@@ -1140,7 +1173,12 @@
             clearTopicBody("HISTORIAL DE SANCIONES");
         };
 
+        const clearNovedadesTable = () => {
+            clearTopicBody("NOVEDADES");
+        };
+
         const clearDynamicTopicTables = () => {
+            clearNovedadesTable();
             clearAlojamientoTable();
             clearConsejoTable();
             clearSancionesTable();
@@ -1160,6 +1198,8 @@
                 loadSelectedConsejo();
             } else if (activeTopic === "SANCIONES") {
                 loadSelectedSanciones();
+            } else if (activeTopic === "NOVEDADES") {
+                loadSelectedNovedades();
             }
         };
 
@@ -1239,6 +1279,16 @@
             );
         };
 
+        const renderNovedadesMatches = (matches) => {
+            renderReadOnlyTable(
+                "NOVEDADES",
+                novedadesHeaders,
+                matches,
+                "No se encontraron novedades para el interno seleccionado.",
+                "Novedades filtradas del interno seleccionado"
+            );
+        };
+
         const loadSelectedAlojamiento = async () => {
             if (!selectedInterno) {
                 setAlojamientoMessage("Seleccione un interno desde el buscador para filtrar la hoja ALOJAMIENTO.");
@@ -1281,6 +1331,21 @@
                 renderSancionesMatches(findSancionesMatches());
             } catch (error) {
                 setSancionesMessage("No se pudo cargar la hoja SANCIONES_RESUELTA. Verifique que el servidor local este iniciado.");
+            }
+        };
+
+        const loadSelectedNovedades = async () => {
+            if (!selectedInterno) {
+                setNovedadesMessage("Seleccione un interno desde el buscador para filtrar la hoja NOVEDADES.");
+                return;
+            }
+
+            try {
+                setNovedadesMessage("Cargando novedades desde la hoja NOVEDADES...");
+                if (!novedadesRows.length) await loadNovedades();
+                renderNovedadesMatches(findNovedadesMatches());
+            } catch (error) {
+                setNovedadesMessage("No se pudo cargar la hoja NOVEDADES. Verifique que el deploy este actualizado y que exista la hoja.");
             }
         };
 
@@ -1375,7 +1440,7 @@
             });
 
             const desiredTopics = [
-                { label: "NOVEDADES", sourceTitle: "ATENCIONES" },
+                { label: "NOVEDADES", sourceTitle: "NOVEDADES" },
                 { label: "ALOJAMIENTO", sourceTitle: "HISTORIAL DE ALOJAMIENTO" },
                 { label: "TRAMITES INTERDISCIPLINARIOS", sourceTitle: "SITUACIÓN LEGAL" },
                 { label: "SANCIONES", sourceTitle: "HISTORIAL DE SANCIONES" },
@@ -1430,6 +1495,8 @@
                             loadSelectedConsejo();
                         } else if (label === "SANCIONES") {
                             loadSelectedSanciones();
+                        } else if (label === "NOVEDADES") {
+                            loadSelectedNovedades();
                         }
                     }
                 });
