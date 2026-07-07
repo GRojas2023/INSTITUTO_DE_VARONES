@@ -72,6 +72,51 @@
         body.sidebar-collapsed .sidebar-toggle {
             left: 12px;
         }
+
+        .panel-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 8px;
+            background: #00355f;
+            color: #ffffff;
+            padding: 10px 16px;
+            font-weight: 700;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+
+        .panel-action:hover {
+            background: #0f4c81;
+        }
+
+        .panel-action:active {
+            transform: translateY(1px);
+        }
+
+        .panel-action:disabled {
+            cursor: wait;
+            opacity: 0.7;
+        }
+
+        .filter-control {
+            width: 100%;
+            min-width: 140px;
+            border: 1px solid #c2c7d1;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #191c1e;
+            font-size: 12px;
+            padding: 6px 8px;
+        }
+
+        .filter-control.active {
+            border-color: #00355f;
+            background: #d0e1fb;
+        }
+
+        .table-shell {
+            max-height: calc(100vh - 310px);
+        }
     </style>
 </head>
 <body class="min-h-screen text-on-surface">
@@ -139,12 +184,239 @@
         </header>
 
         <main class="p-6">
-            <section class="rounded-lg border border-outline-variant bg-surface-container-lowest p-6 shadow-sm">
-                <h3 class="mb-2 text-lg font-bold text-on-surface">Panel de Visualizacion</h3>
-                <p class="text-sm text-on-surface-variant">Pagina base del modulo. El panel izquierdo permanece fijo mientras se agrega el contenido.</p>
+            <section class="border border-outline-variant bg-surface-container-lowest p-6 shadow-sm">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                        <h3 class="mb-2 text-lg font-bold text-on-surface">Panel de Visualizacion</h3>
+                        <p class="text-sm text-on-surface-variant">Seleccione una hoja para cargar sus datos y aplicar filtros.</p>
+                    </div>
+                    <button id="load-novedades" class="panel-action" type="button">
+                        <span class="material-symbols-outlined">campaign</span>
+                        <span>Novedades</span>
+                    </button>
+                </div>
+
+                <div id="novedades-panel" class="mt-6 hidden">
+                    <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <h4 class="text-base font-bold text-primary">Hoja NOVEDADES</h4>
+                            <p id="novedades-status" class="text-sm text-on-surface-variant">Listo para cargar.</p>
+                        </div>
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <input id="novedades-search" class="w-full rounded-md border border-outline-variant bg-white px-3 py-2 text-sm sm:w-80" type="search" placeholder="Buscar en novedades">
+                            <button id="clear-novedades-filters" class="rounded-md border border-outline-variant bg-white px-3 py-2 text-sm font-semibold text-primary hover:bg-secondary-container" type="button">Limpiar filtros</button>
+                        </div>
+                    </div>
+
+                    <div class="table-shell overflow-auto border border-outline-variant bg-white">
+                        <table class="min-w-full border-collapse text-left text-sm">
+                            <thead id="novedades-head" class="sticky top-0 z-10 bg-surface-container"></thead>
+                            <tbody id="novedades-body">
+                                <tr>
+                                    <td class="px-4 py-6 text-center text-on-surface-variant">Presione Novedades para cargar la hoja.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
+
+    <script id="novedades-panel-script">
+        (() => {
+            const isLocalFile = window.location.protocol === "file:";
+            const API_BASE = isLocalFile ? "http://127.0.0.1:8780" : "";
+            const novedadesEndpoint = `${API_BASE}/api/novedades`;
+
+            const loadButton = document.querySelector("#load-novedades");
+            const panel = document.querySelector("#novedades-panel");
+            const statusNode = document.querySelector("#novedades-status");
+            const searchInput = document.querySelector("#novedades-search");
+            const clearButton = document.querySelector("#clear-novedades-filters");
+            const tableHead = document.querySelector("#novedades-head");
+            const tableBody = document.querySelector("#novedades-body");
+
+            let headers = [];
+            let rows = [];
+            let rowNumbers = [];
+            let filters = {};
+
+            const normalizeText = (value) => String(value || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .trim();
+
+            const fitRow = (row) => headers.map((_, index) => String(row[index] || ""));
+
+            const setStatus = (message) => {
+                if (statusNode) statusNode.textContent = message;
+            };
+
+            const setMessageRow = (message) => {
+                if (!tableBody) return;
+                const colspan = Math.max(headers.length, 1);
+                tableBody.innerHTML = `<tr><td colspan="${colspan}" class="px-4 py-6 text-center text-on-surface-variant">${message}</td></tr>`;
+            };
+
+            const getUniqueValues = (columnIndex) => {
+                return [...new Set(rows
+                    .map((row) => String(row[columnIndex] || "").trim())
+                    .filter(Boolean))]
+                    .sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+            };
+
+            const buildFilterControl = (columnIndex) => {
+                const values = getUniqueValues(columnIndex);
+                if (values.length > 0 && values.length <= 40) {
+                    const select = document.createElement("select");
+                    select.className = "filter-control";
+                    const emptyOption = document.createElement("option");
+                    emptyOption.value = "";
+                    emptyOption.textContent = "Todos";
+                    select.appendChild(emptyOption);
+                    values.forEach((value) => {
+                        const option = document.createElement("option");
+                        option.value = value;
+                        option.textContent = value;
+                        select.appendChild(option);
+                    });
+                    select.value = filters[columnIndex] || "";
+                    select.addEventListener("change", () => {
+                        filters[columnIndex] = select.value;
+                        if (!select.value) delete filters[columnIndex];
+                        select.classList.toggle("active", Boolean(select.value));
+                        renderRows();
+                    });
+                    select.classList.toggle("active", Boolean(select.value));
+                    return select;
+                }
+
+                const input = document.createElement("input");
+                input.className = "filter-control";
+                input.type = "search";
+                input.placeholder = "Filtrar";
+                input.value = filters[columnIndex] || "";
+                input.addEventListener("input", () => {
+                    filters[columnIndex] = input.value.trim();
+                    if (!filters[columnIndex]) delete filters[columnIndex];
+                    input.classList.toggle("active", Boolean(filters[columnIndex]));
+                    renderRows();
+                });
+                input.classList.toggle("active", Boolean(input.value));
+                return input;
+            };
+
+            const renderHead = () => {
+                if (!tableHead) return;
+                const labelRow = document.createElement("tr");
+                const filterRow = document.createElement("tr");
+
+                headers.forEach((header, index) => {
+                    const th = document.createElement("th");
+                    th.className = "whitespace-nowrap border-b border-outline-variant px-3 py-3 text-xs font-bold uppercase tracking-wide text-primary";
+                    th.textContent = header || `Columna ${index + 1}`;
+                    labelRow.appendChild(th);
+
+                    const filterTh = document.createElement("th");
+                    filterTh.className = "border-b border-outline-variant px-2 py-2";
+                    filterTh.appendChild(buildFilterControl(index));
+                    filterRow.appendChild(filterTh);
+                });
+
+                tableHead.innerHTML = "";
+                tableHead.append(labelRow, filterRow);
+            };
+
+            const getFilteredRows = () => {
+                const query = normalizeText(searchInput?.value || "");
+                const activeFilters = Object.entries(filters);
+
+                return rows
+                    .map((row, index) => ({ row: fitRow(row), rowNumber: rowNumbers[index] || index + 2 }))
+                    .filter(({ row }) => {
+                        if (query && !normalizeText(row.join(" ")).includes(query)) return false;
+                        return activeFilters.every(([columnIndex, value]) =>
+                            normalizeText(row[Number(columnIndex)]).includes(normalizeText(value))
+                        );
+                    });
+            };
+
+            const renderRows = () => {
+                if (!tableBody) return;
+                const filteredRows = getFilteredRows();
+                if (!filteredRows.length) {
+                    setMessageRow("No se encontraron novedades con los filtros aplicados.");
+                    setStatus(`0 de ${rows.length} registros visibles.`);
+                    return;
+                }
+
+                tableBody.innerHTML = "";
+                filteredRows.forEach(({ row, rowNumber }) => {
+                    const tr = document.createElement("tr");
+                    tr.className = "hover:bg-surface-container";
+                    row.forEach((cell) => {
+                        const td = document.createElement("td");
+                        td.className = "max-w-[320px] border-b border-outline-variant px-3 py-2 align-top text-on-surface";
+                        td.textContent = cell;
+                        tr.appendChild(td);
+                    });
+                    tr.title = `Fila ${rowNumber} de la hoja NOVEDADES`;
+                    tableBody.appendChild(tr);
+                });
+                setStatus(`${filteredRows.length} de ${rows.length} registros visibles.`);
+            };
+
+            const loadNovedades = async () => {
+                if (!loadButton || !panel) return;
+                panel.classList.remove("hidden");
+                loadButton.disabled = true;
+                setStatus("Cargando datos desde la hoja NOVEDADES...");
+                setMessageRow("Cargando novedades...");
+
+                try {
+                    const response = await fetch(novedadesEndpoint, { cache: "no-store" });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        throw new Error(data.error || "No se pudo leer la hoja NOVEDADES.");
+                    }
+
+                    headers = (data.headers || []).map((header, index) => String(header || `Columna ${index + 1}`));
+                    rows = data.rows || [];
+                    rowNumbers = data.rowNumbers || [];
+                    filters = {};
+                    if (searchInput) searchInput.value = "";
+
+                    if (!headers.length) {
+                        headers = ["Novedad"];
+                    }
+
+                    renderHead();
+                    if (!rows.length) {
+                        setMessageRow("La hoja NOVEDADES no tiene registros cargados.");
+                        setStatus("0 registros cargados.");
+                    } else {
+                        renderRows();
+                    }
+                } catch (error) {
+                    setMessageRow("No se pudo cargar la hoja NOVEDADES. Verifique que el servidor este iniciado y que exista la hoja.");
+                    setStatus(error.message || "Error al cargar novedades.");
+                } finally {
+                    loadButton.disabled = false;
+                }
+            };
+
+            loadButton?.addEventListener("click", loadNovedades);
+            searchInput?.addEventListener("input", renderRows);
+            clearButton?.addEventListener("click", () => {
+                filters = {};
+                if (searchInput) searchInput.value = "";
+                renderHead();
+                renderRows();
+            });
+        })();
+    </script>
 
     <script id="sidebar-toggle-script">
         (() => {

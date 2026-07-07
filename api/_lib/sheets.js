@@ -19,6 +19,17 @@ const PARTE_PERSONAL_SHEET = "PERSONAL";
 const PARTE_NOVEDADES_SHEET = "NOVEDADES";
 const PARTE_ALOJAMIENTO_SHEET = "ALOJAMIENTO";
 const PARTE_OBSERVACIONES_SHEET = "OBSERVACIONES";
+const NOVEDADES_RANGE = "'NOVEDADES'!A:H";
+const NOVEDADES_HEADERS = [
+  "FECHA CARGA",
+  "LPU N",
+  "APELLIDO Y NOMBRE",
+  "NOVEDAD",
+  "ALOJAMIENTO",
+  "INICIO",
+  "FINALIZACION",
+  "OBSERVACION",
+];
 const SANCIONES_HEADERS = [
   "EXPEDIENTE",
   "ACTA N.",
@@ -465,6 +476,33 @@ const getPersonalComplejoOptions = async () => {
   return {
     agentes: uniqueSortedValues(rows.map((row) => row[0])),
     funciones: uniqueSortedValues(rows.map((row) => row[1])),
+    cachedAt: new Date().toISOString(),
+  };
+};
+
+const getNovedadesRows = async () => {
+  const values = await getSheetValues(NOVEDADES_RANGE);
+  const hasHeader = (values[0] || []).some((cell) => {
+    const text = String(cell || "").toLowerCase();
+    return text.includes("fecha") || text.includes("lpu") || text.includes("apellido") || text.includes("novedad");
+  });
+
+  if (hasHeader) {
+    const data = rowsFromSheetValues(values);
+    return {
+      ...data,
+      headers: NOVEDADES_HEADERS.map((header, index) => data.headers[index] || header),
+    };
+  }
+
+  const rowPairs = values
+    .map((row, index) => ({ row, rowNumber: index + 1 }))
+    .filter(({ row }) => row.some((cell) => String(cell || "").trim() !== ""));
+
+  return {
+    headers: NOVEDADES_HEADERS,
+    rows: rowPairs.map(({ row }) => row),
+    rowNumbers: rowPairs.map(({ rowNumber }) => rowNumber),
     cachedAt: new Date().toISOString(),
   };
 };
@@ -1164,6 +1202,7 @@ module.exports = {
   updateConsejoRow,
   deleteConsejoRow,
   getPersonalComplejoOptions,
+  getNovedadesRows,
   findInternoByLpu,
   getSancionesRows,
   insertSancionRow,

@@ -22,6 +22,17 @@ const PARTE_PERSONAL_SHEET = "PERSONAL";
 const PARTE_NOVEDADES_SHEET = "NOVEDADES";
 const PARTE_ALOJAMIENTO_SHEET = "ALOJAMIENTO";
 const PARTE_OBSERVACIONES_SHEET = "OBSERVACIONES";
+const NOVEDADES_RANGE = "'NOVEDADES'!A:H";
+const NOVEDADES_HEADERS = [
+  "FECHA CARGA",
+  "LPU N",
+  "APELLIDO Y NOMBRE",
+  "NOVEDAD",
+  "ALOJAMIENTO",
+  "INICIO",
+  "FINALIZACION",
+  "OBSERVACION",
+];
 const CONFIG_TRAMITES_RANGE = "Configuracion!A:A";
 const CONFIG_CONSEJO_RANGE = "Configuracion!C1:E10";
 const CONFIG_CEIP_RANGE = "Configuracion!H1:J10";
@@ -71,6 +82,7 @@ let configSancionesCalificacionesCache = null;
 let internosCache = null;
 let personalComplejoCache = null;
 let alojamientoCache = null;
+let novedadesCache = null;
 let parteDiarioActualCache = null;
 
 const sendJson = (res, status, payload) => {
@@ -736,6 +748,45 @@ const getAlojamientoRows = async (forceRefresh = false) => {
   };
 
   return alojamientoCache.data;
+};
+
+const getNovedadesRows = async (forceRefresh = false) => {
+  if (!forceRefresh && novedadesCache && novedadesCache.expiresAt > Date.now()) {
+    return novedadesCache.data;
+  }
+
+  const values = await getSheetValues(NOVEDADES_RANGE);
+  const hasHeader = (values[0] || []).some((cell) => {
+    const text = String(cell || "").toLowerCase();
+    return text.includes("fecha") || text.includes("lpu") || text.includes("apellido") || text.includes("novedad");
+  });
+  const data = hasHeader
+    ? (() => {
+        const sheetData = rowsFromSheetValues(values);
+        return {
+          ...sheetData,
+          headers: NOVEDADES_HEADERS.map((header, index) => sheetData.headers[index] || header),
+        };
+      })()
+    : (() => {
+        const rowPairs = values
+          .map((row, index) => ({ row, rowNumber: index + 1 }))
+          .filter(({ row }) => row.some((cell) => String(cell || "").trim() !== ""));
+
+        return {
+          headers: NOVEDADES_HEADERS,
+          rows: rowPairs.map(({ row }) => row),
+          rowNumbers: rowPairs.map(({ rowNumber }) => rowNumber),
+          cachedAt: new Date().toISOString(),
+        };
+      })();
+
+  novedadesCache = {
+    data,
+    expiresAt: Date.now() + SHEET_CACHE_MS,
+  };
+
+  return novedadesCache.data;
 };
 
 const findHeaderIndex = (headers, candidates) => {
@@ -1828,6 +1879,15 @@ const server = http.createServer(async (req, res) => {
   if (req.url.startsWith("/api/alojamiento") && req.method === "GET") {
     try {
       sendJson(res, 200, await getAlojamientoRows());
+    } catch (error) {
+      sendJson(res, 500, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.url.startsWith("/api/novedades") && req.method === "GET") {
+    try {
+      sendJson(res, 200, await getNovedadesRows());
     } catch (error) {
       sendJson(res, 500, { error: error.message });
     }
