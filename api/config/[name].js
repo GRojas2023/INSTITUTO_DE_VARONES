@@ -8,11 +8,12 @@ const {
 } = require("../_lib/sheets");
 
 const getRouteName = (req) => {
-  const value = req.query?.name;
+  const url = new URL(req.url, "http://localhost");
+  const value = url.searchParams.get("name");
   if (Array.isArray(value)) return value[0] || "";
   if (value) return value;
 
-  const pathname = new URL(req.url, "http://localhost").pathname;
+  const pathname = url.pathname;
   return pathname.split("/").filter(Boolean).at(-1) || "";
 };
 

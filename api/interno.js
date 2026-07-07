@@ -14,7 +14,8 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const lpu = req.query.lpu || "";
+    const url = new URL(req.url, "http://localhost");
+    const lpu = url.searchParams.get("lpu") || "";
     if (lpu) {
       return res.status(200).json(await findInternoByLpu(lpu));
     }
