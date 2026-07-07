@@ -109,6 +109,7 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fb;
+            overflow-x: hidden;
         }
 
         .search-suggestions {
@@ -169,6 +170,9 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .topics-tabs {
@@ -219,6 +223,9 @@
 
         .topic-section.active {
             display: flex !important;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .topic-section.empty-topic {
@@ -227,6 +234,12 @@
 
         .topic-section > div:first-child {
             display: none;
+        }
+
+        .topic-section > .p-6.space-y-4 {
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .summary-field-label {
@@ -245,15 +258,21 @@
         }
 
         .readonly-table-wrap {
-            overflow: auto;
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
             border: 1px solid #c2c7d1;
             border-radius: 8px;
             background: #ffffff;
         }
 
         .readonly-table {
-            width: 100%;
             min-width: 760px;
+            width: max-content;
+            max-width: none;
             border-collapse: collapse;
             table-layout: auto;
         }
@@ -314,6 +333,10 @@
 
         body.sidebar-collapsed .sidebar-toggle {
             left: 12px;
+        }
+
+        body.sidebar-collapsed #page-shell {
+            max-width: 100vw;
         }
     </style>
 
@@ -378,7 +401,7 @@
     <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Ocultar panel izquierdo" title="Ocultar panel izquierdo">
         <span class="material-symbols-outlined">menu_open</span>
     </button>
-    <div class="ml-[240px] flex-1 flex flex-col">
+    <div id="page-shell" class="ml-[240px] flex-1 min-w-0 max-w-[calc(100vw-240px)] flex flex-col overflow-x-hidden">
         <!-- TopNavBar -->
         <header
             class="flex justify-between items-center w-full px-container-padding h-row-height-standard bg-surface border-b border-outline-variant shadow-sm sticky top-0 z-40">
@@ -413,7 +436,7 @@
             </div>
         </header>
         <!-- Main Content Canvas -->
-        <main class="p-container-padding space-y-gutter bg-background flex-1">
+        <main class="p-container-padding space-y-gutter bg-background flex-1 min-w-0 overflow-x-hidden">
             <!-- Employee Hero Card -->
             <section
                 class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 flex flex-col md:flex-row gap-8 items-start">
