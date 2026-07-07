@@ -245,16 +245,34 @@
         .summary-field-label {
             display: inline-flex;
             align-items: center;
-            min-height: 22px;
-            padding: 2px 8px;
+            min-height: 26px;
+            padding: 3px 10px;
             margin-bottom: 6px;
             border-left: 3px solid #00355f;
             border-radius: 4px;
             background: #d0e1fb;
             color: #00355f;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 800;
             letter-spacing: 0.03em;
+        }
+
+        .summary-hero-card [data-field] {
+            display: block;
+            color: #0b1c30;
+            font-size: 18px;
+            line-height: 1.35;
+            font-weight: 800;
+        }
+
+        .summary-hero-card #interno-nombre {
+            font-size: 34px;
+            line-height: 1.15;
+        }
+
+        .summary-hero-card #interno-subtitulo {
+            font-size: 18px;
+            line-height: 1.45;
         }
 
         .readonly-table-wrap {
@@ -439,7 +457,7 @@
         <main class="p-container-padding space-y-gutter bg-background flex-1 min-w-0 overflow-x-hidden">
             <!-- Employee Hero Card -->
             <section
-                class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 flex flex-col md:flex-row gap-8 items-start">
+                class="summary-hero-card bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 flex flex-col md:flex-row gap-8 items-start">
                 <div class="relative group">
                     <div class="rounded-xl shadow-md w-48 h-48 bg-surface-container-high border border-outline-variant flex items-center justify-center overflow-hidden" aria-label="Silueta de persona sin rostro">
                         <span class="material-symbols-outlined text-primary/60" style="font-size: 132px;">person</span>
