@@ -12,11 +12,11 @@ const getParteDiarioConfig = () => ({
 });
 
 const getRouteName = (req) => {
-  const value = req.query?.name;
-  if (Array.isArray(value)) return value[0] || "";
+  const url = new URL(req.url, "http://localhost");
+  const value = url.searchParams.get("name");
   if (value) return value;
 
-  const pathname = new URL(req.url, "http://localhost").pathname;
+  const pathname = url.pathname;
   return pathname.split("/").filter(Boolean).at(-1) || "";
 };
 
