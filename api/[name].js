@@ -3,6 +3,7 @@ const {
   getNovedadesRows,
   getParteDiarioActual,
   getParteDiarioArchivado,
+  getPartePersonalServicioArchivo,
   saveParteDiarioActual,
   saveParteDiario,
 } = require("./_lib/sheets");
@@ -69,6 +70,13 @@ module.exports = async function handler(req, res) {
     if (name === "parte-diario-archivado") {
       if (req.method === "GET") {
         return res.status(200).json(await getParteDiarioArchivado());
+      }
+      return res.status(405).json({ error: "Metodo no permitido." });
+    }
+
+    if (name === "parte-diario-personal-servicio") {
+      if (req.method === "GET") {
+        return res.status(200).json(await getPartePersonalServicioArchivo());
       }
       return res.status(405).json({ error: "Metodo no permitido." });
     }

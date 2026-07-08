@@ -1273,6 +1273,18 @@ const parseServiceText = (value) => String(value || "")
     return [line.slice(0, separator).trim(), line.slice(separator + 2).trim()];
   });
 
+const getPartePersonalServicioArchivo = async () => {
+  const values = await getArchivedSheetValues(PARTE_PERSONAL_SERVICIO_SHEET, "A:B");
+  const rows = values
+    .map((row) => ({
+      savedAt: String(row[0] || ""),
+      service: parseServiceText(row[1]),
+    }))
+    .filter((row) => Number.isFinite(parseSheetTimestamp(row.savedAt)) && row.service.length);
+
+  return { rows };
+};
+
 const getParteDiarioArchivado = async () => {
   const current = await getParteDiarioActual();
   const [
@@ -1344,6 +1356,7 @@ module.exports = {
   updateConfigCentroEvaluacionProcesados,
   getParteDiarioActual,
   getParteDiarioArchivado,
+  getPartePersonalServicioArchivo,
   saveParteDiarioActual,
   saveParteDiario,
 };
