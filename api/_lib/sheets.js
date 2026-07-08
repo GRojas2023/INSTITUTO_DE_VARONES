@@ -220,6 +220,71 @@ const appendSheetRows = async (sheetTitle, rows, valueInputOption = "USER_ENTERE
   return { ok: true, skipped: false, updatedRange: data.updates?.updatedRange || "" };
 };
 
+const insertSheetRowsAtTop = async (sheetTitle, rows, valueInputOption = "USER_ENTERED") => {
+  const values = (Array.isArray(rows) ? rows : [])
+    .filter((row) => Array.isArray(row) && row.some((cell) => String(cell || "").trim() !== ""));
+
+  if (!values.length) {
+    return { ok: true, skipped: true, updatedRange: "" };
+  }
+
+  await ensureSheetExists(sheetTitle);
+
+  const token = await getAccessToken();
+  const sheetId = await getSheetIdByTitle(sheetTitle);
+  const batchUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`);
+  const insertResponse = await fetch(batchUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      requests: [{
+        insertDimension: {
+          range: {
+            sheetId,
+            dimension: "ROWS",
+            startIndex: 0,
+            endIndex: values.length,
+          },
+          inheritFromBefore: false,
+        },
+      }],
+    }),
+  });
+
+  if (!insertResponse.ok) {
+    const text = await insertResponse.text();
+    throw new Error(`Google Sheets insert error (${sheetTitle}): ${insertResponse.status} ${text}`);
+  }
+
+  const endColumn = columnName(Math.max(...values.map((row) => row.length)));
+  const valuesUrl = new URL(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(
+      quotedSheetRange(sheetTitle, `A1:${endColumn}${values.length}`)
+    )}`
+  );
+  valuesUrl.searchParams.set("valueInputOption", valueInputOption);
+
+  const updateResponse = await fetch(valuesUrl, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ values }),
+  });
+
+  if (!updateResponse.ok) {
+    const text = await updateResponse.text();
+    throw new Error(`Google Sheets update error (${sheetTitle}): ${updateResponse.status} ${text}`);
+  }
+
+  const data = await updateResponse.json();
+  return { ok: true, skipped: false, updatedRange: data.updatedRange || "" };
+};
+
 const ensureSheetExists = async (sheetTitle) => {
   const token = await getAccessToken();
   const batchUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`);
@@ -1107,11 +1172,11 @@ const appendParteDiarioSheets = async (sections, savedAt) => {
   const results = {};
 
   if (serviceText) {
-    results.personalServicio = await appendSheetRows(PARTE_PERSONAL_SERVICIO_SHEET, [[timestamp, serviceText]], "RAW");
+    results.personalServicio = await insertSheetRowsAtTop(PARTE_PERSONAL_SERVICIO_SHEET, [[timestamp, serviceText]], "RAW");
   }
 
   if (staffNewsRows.length) {
-    results.personal = await appendSheetRows(
+    results.personal = await insertSheetRowsAtTop(
       PARTE_PERSONAL_SHEET,
       staffNewsRows.map((row) => [timestamp, ...row]),
       "RAW"
@@ -1119,7 +1184,7 @@ const appendParteDiarioSheets = async (sections, savedAt) => {
   }
 
   if (inmateNewsRows.length) {
-    results.novedades = await appendSheetRows(
+    results.novedades = await insertSheetRowsAtTop(
       PARTE_NOVEDADES_SHEET,
       inmateNewsRows.map((row) => [timestamp, ...row]),
       "RAW"
@@ -1127,7 +1192,7 @@ const appendParteDiarioSheets = async (sections, savedAt) => {
   }
 
   if (housingRows.length) {
-    results.alojamiento = await appendSheetRows(
+    results.alojamiento = await insertSheetRowsAtTop(
       PARTE_ALOJAMIENTO_SHEET,
       housingRows.map((row) => [timestamp, ...row]),
       "RAW"
