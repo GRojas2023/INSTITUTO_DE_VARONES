@@ -220,7 +220,7 @@ const appendSheetRows = async (sheetTitle, rows, valueInputOption = "USER_ENTERE
   return { ok: true, skipped: false, updatedRange: data.updates?.updatedRange || "" };
 };
 
-const insertSheetRowsAtTop = async (sheetTitle, rows, valueInputOption = "USER_ENTERED") => {
+const insertSheetRowsAfterHeader = async (sheetTitle, rows, valueInputOption = "USER_ENTERED") => {
   const values = (Array.isArray(rows) ? rows : [])
     .filter((row) => Array.isArray(row) && row.some((cell) => String(cell || "").trim() !== ""));
 
@@ -245,8 +245,8 @@ const insertSheetRowsAtTop = async (sheetTitle, rows, valueInputOption = "USER_E
           range: {
             sheetId,
             dimension: "ROWS",
-            startIndex: 0,
-            endIndex: values.length,
+            startIndex: 1,
+            endIndex: values.length + 1,
           },
           inheritFromBefore: false,
         },
@@ -262,7 +262,7 @@ const insertSheetRowsAtTop = async (sheetTitle, rows, valueInputOption = "USER_E
   const endColumn = columnName(Math.max(...values.map((row) => row.length)));
   const valuesUrl = new URL(
     `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(
-      quotedSheetRange(sheetTitle, `A1:${endColumn}${values.length}`)
+      quotedSheetRange(sheetTitle, `A2:${endColumn}${values.length + 1}`)
     )}`
   );
   valuesUrl.searchParams.set("valueInputOption", valueInputOption);
@@ -283,6 +283,32 @@ const insertSheetRowsAtTop = async (sheetTitle, rows, valueInputOption = "USER_E
 
   const data = await updateResponse.json();
   return { ok: true, skipped: false, updatedRange: data.updatedRange || "" };
+};
+
+const normalizeParteArchiveCell = (value) => String(value || "")
+  .trim()
+  .replace(/\s+/g, " ")
+  .toUpperCase();
+
+const parteArchiveKey = (row) => (Array.isArray(row) ? row : [])
+  .slice(1)
+  .map(normalizeParteArchiveCell)
+  .join("\u001f");
+
+const removeRowsAlreadyArchived = async (sheetTitle, rows, columns = "A:Z") => {
+  const values = await getArchivedSheetValues(sheetTitle, columns);
+  const existingKeys = new Set(values
+    .filter((row) => Array.isArray(row) && row.length > 1)
+    .map(parteArchiveKey)
+    .filter(Boolean));
+  const seenNewKeys = new Set();
+
+  return rows.filter((row) => {
+    const key = parteArchiveKey(row);
+    if (!key || existingKeys.has(key) || seenNewKeys.has(key)) return false;
+    seenNewKeys.add(key);
+    return true;
+  });
 };
 
 const ensureSheetExists = async (sheetTitle) => {
@@ -1172,35 +1198,52 @@ const appendParteDiarioSheets = async (sections, savedAt) => {
   const results = {};
 
   if (serviceText) {
-    results.personalServicio = await insertSheetRowsAtTop(PARTE_PERSONAL_SERVICIO_SHEET, [[timestamp, serviceText]], "RAW");
+    const rows = await removeRowsAlreadyArchived(PARTE_PERSONAL_SERVICIO_SHEET, [[timestamp, serviceText]], "A:B");
+    results.personalServicio = await insertSheetRowsAfterHeader(PARTE_PERSONAL_SERVICIO_SHEET, rows, "RAW");
   }
 
   if (staffNewsRows.length) {
-    results.personal = await insertSheetRowsAtTop(
+    const rows = await removeRowsAlreadyArchived(
       PARTE_PERSONAL_SHEET,
       staffNewsRows.map((row) => [timestamp, ...row]),
+      "A:G"
+    );
+    results.personal = await insertSheetRowsAfterHeader(
+      PARTE_PERSONAL_SHEET,
+      rows,
       "RAW"
     );
   }
 
   if (inmateNewsRows.length) {
-    results.novedades = await insertSheetRowsAtTop(
+    const rows = await removeRowsAlreadyArchived(
       PARTE_NOVEDADES_SHEET,
       inmateNewsRows.map((row) => [timestamp, ...row]),
+      "A:H"
+    );
+    results.novedades = await insertSheetRowsAfterHeader(
+      PARTE_NOVEDADES_SHEET,
+      rows,
       "RAW"
     );
   }
 
   if (housingRows.length) {
-    results.alojamiento = await insertSheetRowsAtTop(
+    const rows = await removeRowsAlreadyArchived(
       PARTE_ALOJAMIENTO_SHEET,
       housingRows.map((row) => [timestamp, ...row]),
+      "A:G"
+    );
+    results.alojamiento = await insertSheetRowsAfterHeader(
+      PARTE_ALOJAMIENTO_SHEET,
+      rows,
       "RAW"
     );
   }
 
   if (observationsText && observationsText.toUpperCase() !== "OBSERVACIONES:") {
-    results.observaciones = await appendSheetRows(PARTE_OBSERVACIONES_SHEET, [[timestamp, observationsText]], "RAW");
+    const rows = await removeRowsAlreadyArchived(PARTE_OBSERVACIONES_SHEET, [[timestamp, observationsText]], "A:B");
+    results.observaciones = await insertSheetRowsAfterHeader(PARTE_OBSERVACIONES_SHEET, rows, "RAW");
   }
 
   return results;
