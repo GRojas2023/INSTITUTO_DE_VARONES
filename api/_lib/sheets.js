@@ -8,7 +8,7 @@ const CONFIG_CEIP_RANGE = "Configuracion!H1:K10";
 const CONFIG_SANCIONES_ARTICULOS_RANGE = "Configuracion!N:P";
 const CONFIG_SANCIONES_CALIFICACIONES_RANGE = "Configuracion!S:S";
 const INTERNOS_RANGE = "internos";
-const PERSONAL_COMPLEJO_RANGE = "PERSONAL_COMPLEJO!E:F";
+const PERSONAL_COMPLEJO_RANGE = "PERSONAL_COMPLEJO!D:F";
 const SANCIONES_RANGE = "'SANCIONES_RESUELTA'!A:S";
 const ALOJAMIENTO_RANGE = "ALOJAMIENTO";
 const SHEET_ID = 0;
@@ -564,10 +564,17 @@ const uniqueSortedValues = (values) => [...new Set(values
 const getPersonalComplejoOptions = async () => {
   const values = await getSheetValues(PERSONAL_COMPLEJO_RANGE);
   const rows = values.filter((row) => row.some((cell) => String(cell || "").trim() !== ""));
+  const personal = rows
+    .map((row) => ({
+      cred: String(row[0] || "").trim(),
+      agente: String(row[1] || "").trim(),
+    }))
+    .filter((row) => row.cred || row.agente);
 
   return {
-    agentes: uniqueSortedValues(rows.map((row) => row[0])),
-    funciones: uniqueSortedValues(rows.map((row) => row[1])),
+    agentes: uniqueSortedValues(personal.map((row) => row.agente)),
+    funciones: uniqueSortedValues(rows.map((row) => row[2])),
+    personal,
     cachedAt: new Date().toISOString(),
   };
 };
