@@ -356,7 +356,12 @@
         }
 
         body.sidebar-collapsed #page-shell {
+            margin-left: 0 !important;
             max-width: 100vw;
+        }
+
+        #page-shell {
+            margin-left: 240px !important;
         }
 
         #module-content {
@@ -910,7 +915,8 @@
 
             const sanitizeModuleStyle = (cssText) => cssText
                 .replace(/body\s*>\s*aside\s*,\s*body\s*>\s*#sidebar-toggle\s*\{[^}]*\}/g, "")
-                .replace(/\.ml-\\\[240px\\\]\s*,\s*\.content-shell\s*\{[^}]*\}/g, "");
+                .replace(/\.ml-\\\[240px\\\]\s*,\s*\.content-shell\s*\{[^}]*\}/g, "")
+                .replace(/\.content-shell\s*,\s*\.ml-\\\[240px\\\]\s*\{[^}]*\}/g, "");
 
             const executeModuleScripts = (scripts, loadId) => {
                 const executedScripts = [];
@@ -1726,7 +1732,7 @@
 
             const setCollapsed = (collapsed) => {
                 document.body.classList.toggle("sidebar-collapsed", collapsed);
-                content.style.marginLeft = collapsed ? "0" : "240px";
+                content.style.setProperty("margin-left", collapsed ? "0" : "240px", "important");
                 button.setAttribute("aria-label", collapsed ? "Mostrar panel izquierdo" : "Ocultar panel izquierdo");
                 button.title = collapsed ? "Mostrar panel izquierdo" : "Ocultar panel izquierdo";
                 if (icon) icon.textContent = collapsed ? "menu" : "menu_open";
