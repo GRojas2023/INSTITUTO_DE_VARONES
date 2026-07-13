@@ -774,6 +774,273 @@ const parteArchiveKey = (row) => (Array.isArray(row) ? row : [])
   .map(normalizeParteArchiveCell)
   .join("\u001f");
 
+const novedadesEventKey = (row) => {
+  if (!Array.isArray(row)) return "";
+  const parts = [row[1], row[3], row[5]].map(normalizeParteArchiveCell);
+  return parts.every(Boolean) ? parts.join("\u001f") : "";
+};
+
+const rowCompletenessScore = (row) => (Array.isArray(row) ? row : [])
+  .reduce((score, cell) => score + (String(cell || "").trim() ? 1 : 0), 0);
+
+const mergeNovedadRows = (existingRow, incomingRow) => {
+  const size = Math.max(existingRow?.length || 0, incomingRow?.length || 0, NOVEDADES_HEADERS.length);
+  return Array.from({ length: size }, (_, index) => {
+    const incomingValue = incomingRow?.[index];
+    const existingValue = existingRow?.[index];
+    return String(incomingValue || "").trim() ? incomingValue : existingValue || "";
+  });
+};
+
+const updateSheetRow = async (sheetTitle, rowNumber, row, valueInputOption = "USER_ENTERED") => {
+  const values = Array.isArray(row) ? row : [];
+  if (!values.length || !Number.isInteger(rowNumber) || rowNumber < 2) {
+    return { ok: true, skipped: true, updatedRange: "" };
+  }
+
+  await ensureSheetExists(sheetTitle);
+
+  const token = await getAccessToken();
+  const endColumn = columnName(values.length);
+  const valuesUrl = new URL(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(
+      quotedSheetRange(sheetTitle, `A${rowNumber}:${endColumn}${rowNumber}`)
+    )}`
+  );
+  valuesUrl.searchParams.set("valueInputOption", valueInputOption);
+
+  const response = await fetch(valuesUrl, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ values: [values] }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Google Sheets update error (${sheetTitle}): ${response.status} ${text}`);
+  }
+
+  const data = await response.json();
+  return { ok: true, skipped: false, updatedRange: data.updatedRange || "" };
+};
+
+const deleteSheetRows = async (sheetTitle, rowNumbers) => {
+  const rows = [...new Set((Array.isArray(rowNumbers) ? rowNumbers : [])
+    .filter((rowNumber) => Number.isInteger(rowNumber) && rowNumber >= 2))]
+    .sort((a, b) => b - a);
+
+  if (!rows.length) {
+    return { ok: true, skipped: true, deletedRows: 0 };
+  }
+
+  await ensureSheetExists(sheetTitle);
+
+  const token = await getAccessToken();
+  const sheetId = await getSheetIdByTitle(sheetTitle);
+  const batchUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`);
+  const response = await fetch(batchUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      requests: rows.map((rowNumber) => ({
+        deleteDimension: {
+          range: {
+            sheetId,
+            dimension: "ROWS",
+            startIndex: rowNumber - 1,
+            endIndex: rowNumber,
+          },
+        },
+      })),
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Google Sheets delete error (${sheetTitle}): ${response.status} ${text}`);
+  }
+
+  return { ok: true, skipped: false, deletedRows: rows.length };
+};
+
+const cleanupNovedadesSheetDuplicates = async (valueInputOption = "RAW") => {
+  await ensureSheetExists(PARTE_NOVEDADES_SHEET);
+
+  const existingValues = await getArchivedSheetValues(PARTE_NOVEDADES_SHEET, "A:H");
+  const existingByKey = new Map();
+  existingValues.slice(1).forEach((row, index) => {
+    const key = novedadesEventKey(row);
+    if (!key) return;
+    const entry = {
+      row,
+      rowNumber: index + 2,
+      score: rowCompletenessScore(row),
+      timestampMs: parseSheetTimestamp(row[0]),
+    };
+    if (!existingByKey.has(key)) existingByKey.set(key, []);
+    existingByKey.get(key).push(entry);
+  });
+
+  let updated = 0;
+  const duplicateRowNumbers = [];
+
+  for (const entries of existingByKey.values()) {
+    if (entries.length < 2) continue;
+
+    const sorted = [...entries].sort((a, b) =>
+      b.score - a.score ||
+      (Number.isFinite(b.timestampMs) ? b.timestampMs : 0) - (Number.isFinite(a.timestampMs) ? a.timestampMs : 0)
+    );
+    const target = sorted[0];
+    const mergedRow = entries.reduce((current, entry) => mergeNovedadRows(entry.row, current), target.row);
+    await updateSheetRow(PARTE_NOVEDADES_SHEET, target.rowNumber, mergedRow, valueInputOption);
+    updated += 1;
+    duplicateRowNumbers.push(...sorted.slice(1).map((entry) => entry.rowNumber));
+  }
+
+  const deleteResult = await deleteSheetRows(PARTE_NOVEDADES_SHEET, duplicateRowNumbers);
+  return { updated, deletedDuplicates: deleteResult.deletedRows || 0 };
+};
+
+const upsertNovedadesRows = async (rows, valueInputOption = "RAW") => {
+  const incomingRows = (Array.isArray(rows) ? rows : [])
+    .filter((row) => Array.isArray(row) && row.some((cell) => String(cell || "").trim() !== ""));
+
+  if (!incomingRows.length) {
+    return { ok: true, skipped: true, updatedRange: "", inserted: 0, updated: 0, deletedDuplicates: 0 };
+  }
+
+  await ensureSheetExists(PARTE_NOVEDADES_SHEET);
+  const cleanupResult = await cleanupNovedadesSheetDuplicates(valueInputOption);
+
+  const existingValues = await getArchivedSheetValues(PARTE_NOVEDADES_SHEET, "A:H");
+  const existingByKey = new Map();
+  existingValues.slice(1).forEach((row, index) => {
+    const key = novedadesEventKey(row);
+    if (!key) return;
+    const entry = {
+      row,
+      rowNumber: index + 2,
+      score: rowCompletenessScore(row),
+      timestampMs: parseSheetTimestamp(row[0]),
+    };
+    if (!existingByKey.has(key)) existingByKey.set(key, []);
+    existingByKey.get(key).push(entry);
+  });
+
+  const pendingInserts = [];
+  let updated = 0;
+  let deletedDuplicates = 0;
+
+  for (const incomingRow of incomingRows) {
+    const key = novedadesEventKey(incomingRow);
+    if (!key) continue;
+
+    const matches = existingByKey.get(key) || [];
+    if (!matches.length) {
+      pendingInserts.push(incomingRow);
+      existingByKey.set(key, [{
+        row: incomingRow,
+        rowNumber: null,
+        pendingIndex: pendingInserts.length - 1,
+        score: rowCompletenessScore(incomingRow),
+        timestampMs: parseSheetTimestamp(incomingRow[0]),
+      }]);
+      continue;
+    }
+
+    matches.sort((a, b) =>
+      b.score - a.score ||
+      (Number.isFinite(b.timestampMs) ? b.timestampMs : 0) - (Number.isFinite(a.timestampMs) ? a.timestampMs : 0)
+    );
+    const target = matches[0];
+    const mergedRow = mergeNovedadRows(target.row, incomingRow);
+    if (target.rowNumber === null) {
+      pendingInserts[target.pendingIndex] = mergedRow;
+      existingByKey.set(key, [{
+        row: mergedRow,
+        rowNumber: null,
+        pendingIndex: target.pendingIndex,
+        score: rowCompletenessScore(mergedRow),
+        timestampMs: parseSheetTimestamp(mergedRow[0]),
+      }]);
+      continue;
+    }
+
+    await updateSheetRow(PARTE_NOVEDADES_SHEET, target.rowNumber, mergedRow, valueInputOption);
+    updated += 1;
+
+    const duplicateRowNumbers = matches.slice(1).map((match) => match.rowNumber);
+    const deleteResult = await deleteSheetRows(PARTE_NOVEDADES_SHEET, duplicateRowNumbers);
+    deletedDuplicates += deleteResult.deletedRows || 0;
+
+    existingByKey.set(key, [{
+      row: mergedRow,
+      rowNumber: target.rowNumber,
+      score: rowCompletenessScore(mergedRow),
+      timestampMs: parseSheetTimestamp(mergedRow[0]),
+    }]);
+  }
+
+  const insertResult = await insertSheetRowsAfterHeader(PARTE_NOVEDADES_SHEET, pendingInserts, valueInputOption);
+  novedadesCache = null;
+
+  return {
+    ok: true,
+    skipped: false,
+    updatedRange: insertResult.updatedRange || "",
+    inserted: pendingInserts.length,
+    updated: updated + (cleanupResult.updated || 0),
+    deletedDuplicates: deletedDuplicates + (cleanupResult.deletedDuplicates || 0),
+  };
+};
+
+const consolidateNovedadesData = (data) => {
+  const groups = new Map();
+  const singles = [];
+
+  (data.rows || []).forEach((row, index) => {
+    const key = novedadesEventKey(row);
+    const entry = {
+      row,
+      rowNumber: data.rowNumbers?.[index],
+      score: rowCompletenessScore(row),
+      timestampMs: parseSheetTimestamp(row?.[0]),
+      order: index,
+    };
+    if (!key) {
+      singles.push(entry);
+      return;
+    }
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
+  });
+
+  const consolidated = [
+    ...singles,
+    ...[...groups.values()].map((entries) => {
+      const sorted = [...entries].sort((a, b) =>
+        b.score - a.score ||
+        (Number.isFinite(b.timestampMs) ? b.timestampMs : 0) - (Number.isFinite(a.timestampMs) ? a.timestampMs : 0)
+      );
+      const mergedRow = entries.reduce((current, entry) => mergeNovedadRows(entry.row, current), sorted[0].row);
+      return { ...sorted[0], row: mergedRow, order: Math.min(...entries.map((entry) => entry.order)) };
+    }),
+  ].sort((a, b) => a.order - b.order);
+
+  return {
+    ...data,
+    rows: consolidated.map((entry) => entry.row),
+    rowNumbers: consolidated.map((entry) => entry.rowNumber).filter((rowNumber) => rowNumber !== undefined),
+  };
+};
+
 const removeRowsAlreadyArchived = async (sheetTitle, rows, columns = "A:Z") => {
   const values = await getArchivedSheetValues(sheetTitle, columns);
   const existingKeys = new Set(values
@@ -919,7 +1186,7 @@ const getNovedadesRows = async (forceRefresh = false) => {
     const text = String(cell || "").toLowerCase();
     return text.includes("fecha") || text.includes("lpu") || text.includes("apellido") || text.includes("novedad");
   });
-  const data = hasHeader
+  const data = consolidateNovedadesData(hasHeader
     ? (() => {
         const sheetData = rowsFromSheetValues(values);
         return {
@@ -938,7 +1205,7 @@ const getNovedadesRows = async (forceRefresh = false) => {
           rowNumbers: rowPairs.map(({ rowNumber }) => rowNumber),
           cachedAt: new Date().toISOString(),
         };
-      })();
+      })());
 
   novedadesCache = {
     data,
@@ -1349,14 +1616,8 @@ const appendParteDiarioSheets = async (sections, savedAt) => {
   }
 
   if (inmateNewsRows.length) {
-    const rows = await removeRowsAlreadyArchived(
-      PARTE_NOVEDADES_SHEET,
+    results.novedades = await upsertNovedadesRows(
       inmateNewsRows.map((row) => [timestamp, ...row]),
-      "A:H"
-    );
-    results.novedades = await insertSheetRowsAfterHeader(
-      PARTE_NOVEDADES_SHEET,
-      rows,
       "RAW"
     );
   }
@@ -2094,10 +2355,11 @@ const server = http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url, `http://${HOST}:${PORT}`);
       const lpu = url.searchParams.get("lpu") || "";
+      const forceRefresh = url.searchParams.has("_t") || url.searchParams.has("_sheetsRefresh");
       if (lpu) {
         sendJson(res, 200, await findInternoByLpu(lpu));
       } else {
-        sendJson(res, 200, await getInternosRows());
+        sendJson(res, 200, await getInternosRows(forceRefresh));
       }
     } catch (error) {
       sendJson(res, 500, { error: error.message });

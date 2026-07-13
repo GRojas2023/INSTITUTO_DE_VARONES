@@ -907,6 +907,7 @@
         const apiEndpoint = window.location.protocol === "file:"
             ? "http://127.0.0.1:8780/api/interno"
             : "/api/interno";
+        const sheetsRefreshParam = "_sheetsRefresh";
 
         alojamientoOptions.forEach((value) => {
             const option = document.createElement("option");
@@ -1379,8 +1380,9 @@
                 }
 
                 newInternoForm.reset();
-                setNewInternoStatus("Interno guardado correctamente.", "success");
-                renderTable(result.headers || [], result.rows || [], result.rowNumbers || []);
+                setNewInternoStatus("Interno guardado correctamente. Actualizando hoja...", "success");
+                await loadInternosFromApi(true);
+                setNewInternoStatus("Interno guardado correctamente. Hoja actualizada.", "success");
             } catch (saveError) {
                 setNewInternoStatus(saveError.message || "No se pudo guardar el interno.", "error");
             } finally {
@@ -1509,10 +1511,23 @@
 
         tableSearch?.addEventListener("input", applyFilters);
 
-        const loadInternosFromApi = () => {
-            if (!table) return;
+        const resetLoadingState = (message = "Actualizando...") => {
+            setMessageRow(message);
+            metricTotal.textContent = "-";
+            metricCondenados.textContent = "-";
+            metricProcesados.textContent = "-";
+            metricColumns.textContent = "-";
+            metricCondenadosPct.textContent = "";
+            metricProcesadosPct.textContent = "";
+        };
 
-            fetch(apiEndpoint)
+        const getRefreshUrl = () => apiEndpoint + (apiEndpoint.includes("?") ? "&" : "?") + "_t=" + Date.now();
+
+        const loadInternosFromApi = (forceRefresh = false) => {
+            if (!table) return Promise.resolve();
+
+            const url = forceRefresh ? getRefreshUrl() : apiEndpoint;
+            return fetch(url)
                 .then((response) => {
                     if (!response.ok) throw new Error("API local no disponible");
                     return response.json();
@@ -1521,22 +1536,26 @@
                     renderTable(data.headers || [], data.rows || [], data.rowNumbers || []);
                 })
                 .catch(() => {
-                    loadPublicSheet();
+                    return loadPublicSheet();
                 });
         };
 
         const loadPublicSheet = () => {
-            const callbackName = "renderInternosSheet";
+            const callbackName = `renderInternosSheet_${Date.now()}`;
 
+            return new Promise((resolve) => {
             window[callbackName] = (response) => {
+                delete window[callbackName];
                 if (response?.status === "error") {
                     setMessageRow("No se pudo leer la hoja internos. Revisar que el archivo este compartido.");
+                    resolve();
                     return;
                 }
 
                 const rows = response?.table?.rows || [];
                 if (!rows.length) {
                     setMessageRow("No se encontraron datos en la hoja internos.");
+                    resolve();
                     return;
                 }
 
@@ -1545,20 +1564,25 @@
                 const dataRows = rows.slice(1)
                     .filter((row) => (row.c || []).some((cell) => formatCell(cell) !== ""));
                 renderTable(headers, dataRows.map((row) => (row.c || []).map(formatCell)));
+                resolve();
             };
 
             const script = document.createElement("script");
             const params = new URLSearchParams({
                 tqx: `out:json;responseHandler:${callbackName}`,
                 sheet: sheetName,
+                _t: Date.now(),
             });
 
             script.src = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?${params}`;
             script.onerror = () => {
+                delete window[callbackName];
                 setMessageRow("No se pudo conectar con Google Sheets.");
+                resolve();
             };
 
             document.body.appendChild(script);
+            });
         };
 
         refreshButton?.addEventListener("click", () => {
@@ -1584,7 +1608,21 @@
                 });
         });
 
-        loadInternosFromApi();
+        document.querySelectorAll("aside a[href]:not([href='#'])").forEach((link) => {
+            link.addEventListener("click", (event) => {
+                const targetUrl = new URL(link.getAttribute("href"), window.location.href);
+                targetUrl.searchParams.set(sheetsRefreshParam, Date.now());
+                event.preventDefault();
+                window.location.assign(targetUrl.href);
+            });
+        });
+
+        if (new URLSearchParams(window.location.search).has(sheetsRefreshParam)) {
+            resetLoadingState("Cargando datos actualizados desde Google Sheets...");
+            loadInternosFromApi(true);
+        } else {
+            loadInternosFromApi();
+        }
     </script>
     <script id="sidebar-toggle-script">
         (() => {

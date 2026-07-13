@@ -320,6 +320,61 @@
         .readonly-table tbody tr:hover td {
             background: #f7f9fb;
         }
+
+        .photo-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(15, 28, 42, 0.48);
+        }
+
+        .photo-modal-backdrop.visible {
+            display: flex;
+        }
+
+        .photo-modal {
+            width: min(560px, 100%);
+            max-height: calc(100vh - 48px);
+            overflow: auto;
+            border: 1px solid #c2c7d1;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 24px 60px rgba(0, 53, 95, 0.24);
+        }
+
+        .photo-form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .photo-form-field label {
+            color: #00355f;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .photo-form-field input {
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid #c2c7d1;
+            border-radius: 8px;
+            background: #f7f9fb;
+            color: #191c1e;
+            font-size: 14px;
+        }
+
+        .photo-form-field input[readonly] {
+            background: #eceef0;
+            color: #42474f;
+            font-weight: 700;
+        }
     
         .sidebar-toggle {
             position: fixed;
@@ -487,6 +542,9 @@
                         <span class="material-symbols-outlined text-primary/60" style="font-size: 132px;">person</span>
                     </div>
                     <button
+                        id="edit-photo-button"
+                        type="button"
+                        aria-label="Editar foto del interno"
                         class="absolute -bottom-2 -right-2 bg-primary text-on-primary p-2 rounded-lg shadow-lg hover:brightness-110 active:scale-90 transition-all">
                         <span class="material-symbols-outlined" data-icon="edit">edit</span>
                     </button>
@@ -872,6 +930,43 @@
                 </section>
             </div>
         </main>
+        <div id="photo-modal-backdrop" class="photo-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="photo-modal-title">
+            <form id="photo-form" class="photo-modal">
+                <div class="p-6 border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+                    <div>
+                        <h2 id="photo-modal-title" class="text-headline-sm font-headline-sm text-primary">Editar foto</h2>
+                        <p class="text-body-sm text-on-surface-variant">Buscar interno y asociar la imagen almacenada en Cloudinary.</p>
+                    </div>
+                    <button id="photo-modal-close" type="button" class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg" aria-label="Cerrar formulario">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="photo-form-field relative">
+                        <label for="photo-interno-name">Apellido y nombre del interno</label>
+                        <input id="photo-interno-name" name="interno" type="text" autocomplete="off" placeholder="Buscar por apellido y nombre">
+                        <div id="photo-interno-suggestions" class="search-suggestions" role="listbox"></div>
+                    </div>
+                    <div class="photo-form-field">
+                        <label for="photo-interno-lpu">LPU</label>
+                        <input id="photo-interno-lpu" name="lpu" type="text" readonly placeholder="Se completa al seleccionar el interno">
+                    </div>
+                    <div class="photo-form-field">
+                        <label for="photo-file">Foto</label>
+                        <input id="photo-file" name="foto" type="file" accept="image/*">
+                    </div>
+                    <div class="photo-form-field">
+                        <label for="photo-cloudinary-url">URL de Cloudinary</label>
+                        <input id="photo-cloudinary-url" name="cloudinaryUrl" type="url" placeholder="https://res.cloudinary.com/...">
+                    </div>
+                    <p id="photo-form-status" class="text-body-sm text-on-surface-variant">Seleccione un interno para completar el LPU correspondiente.</p>
+                </div>
+                <div class="px-6 py-4 border-t border-outline-variant flex flex-col sm:flex-row justify-end gap-3 bg-surface-container-low">
+                    <button id="photo-form-cancel" type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-primary font-bold hover:bg-surface-container-high">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary font-bold hover:brightness-110">Guardar referencia</button>
+                </div>
+            </form>
+        </div>
         <section id="module-content" aria-live="polite"></section>
     </div>
 
@@ -1027,11 +1122,24 @@
         const situacionBadge = document.querySelector("#interno-situacion-badge");
         const faseBadge = document.querySelector("#interno-fase-badge");
         const resumenFields = Array.from(document.querySelectorAll("[data-field]"));
+        const editPhotoButton = document.querySelector("#edit-photo-button");
+        const photoModalBackdrop = document.querySelector("#photo-modal-backdrop");
+        const photoModalClose = document.querySelector("#photo-modal-close");
+        const photoFormCancel = document.querySelector("#photo-form-cancel");
+        const photoForm = document.querySelector("#photo-form");
+        const photoInternoNameInput = document.querySelector("#photo-interno-name");
+        const photoInternoLpuInput = document.querySelector("#photo-interno-lpu");
+        const photoInternoSuggestions = document.querySelector("#photo-interno-suggestions");
+        const photoCloudinaryUrlInput = document.querySelector("#photo-cloudinary-url");
+        const photoFormStatus = document.querySelector("#photo-form-status");
 
         let internosHeaders = [];
         let internosRows = [];
         let currentSuggestions = [];
         let activeSuggestionIndex = -1;
+        let currentPhotoSuggestions = [];
+        let activePhotoSuggestionIndex = -1;
+        let selectedPhotoInterno = null;
         let selectedInterno = null;
         let alojamientoHeaders = [];
         let alojamientoRows = [];
@@ -1216,6 +1324,120 @@
             const data = await response.json();
             internosHeaders = data.headers || [];
             internosRows = data.rows || [];
+        };
+
+        const hidePhotoSuggestions = () => {
+            currentPhotoSuggestions = [];
+            activePhotoSuggestionIndex = -1;
+            if (photoInternoSuggestions) {
+                photoInternoSuggestions.classList.remove("visible");
+                photoInternoSuggestions.innerHTML = "";
+            }
+        };
+
+        const setActivePhotoSuggestion = (index) => {
+            if (!photoInternoSuggestions || !currentPhotoSuggestions.length) return;
+            activePhotoSuggestionIndex = Math.max(0, Math.min(index, currentPhotoSuggestions.length - 1));
+            Array.from(photoInternoSuggestions.querySelectorAll(".suggestion-option")).forEach((button, buttonIndex) => {
+                button.classList.toggle("active", buttonIndex === activePhotoSuggestionIndex);
+            });
+        };
+
+        const selectPhotoInterno = (row) => {
+            const nombre = valueFor(row, "APELLIDO Y NOMBRE") || "";
+            const lpu = valueFor(row, "L.P.U.") || "";
+            selectedPhotoInterno = { row, nombre, lpu };
+            if (photoInternoNameInput) photoInternoNameInput.value = nombre;
+            if (photoInternoLpuInput) photoInternoLpuInput.value = lpu;
+            if (photoFormStatus) photoFormStatus.textContent = lpu
+                ? `LPU ${lpu} completado para el interno seleccionado.`
+                : "El interno seleccionado no tiene LPU cargado en la hoja internos.";
+            hidePhotoSuggestions();
+        };
+
+        const renderPhotoSuggestions = (query = "") => {
+            if (!photoInternoSuggestions) return;
+            const trimmedQuery = query.trim();
+            if (!trimmedQuery) {
+                hidePhotoSuggestions();
+                return;
+            }
+
+            const nameIndex = headerIndex("APELLIDO Y NOMBRE");
+            const normalizedQuery = normalizeText(trimmedQuery);
+
+            currentPhotoSuggestions = internosRows
+                .filter((row) => {
+                    const name = nameIndex >= 0 ? String(row[nameIndex] || "") : "";
+                    return normalizeText(name).includes(normalizedQuery);
+                })
+                .slice(0, 12);
+
+            if (!currentPhotoSuggestions.length) {
+                photoInternoSuggestions.innerHTML = `
+                    <div class="suggestion-option" role="option">
+                        <span class="suggestion-name">Sin coincidencias</span>
+                        <span class="suggestion-meta">Busque por apellido y nombre en la hoja internos</span>
+                    </div>`;
+                photoInternoSuggestions.classList.add("visible");
+                activePhotoSuggestionIndex = -1;
+                return;
+            }
+
+            photoInternoSuggestions.innerHTML = "";
+            currentPhotoSuggestions.forEach((row, index) => {
+                const nombre = valueFor(row, "APELLIDO Y NOMBRE") || "Sin nombre";
+                const lpu = valueFor(row, "L.P.U.") || "-";
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "suggestion-option";
+                button.setAttribute("role", "option");
+
+                const nameSpan = document.createElement("span");
+                nameSpan.className = "suggestion-name";
+                nameSpan.textContent = nombre;
+
+                const metaSpan = document.createElement("span");
+                metaSpan.className = "suggestion-meta";
+                metaSpan.textContent = `L.P.U. ${lpu}`;
+
+                button.append(nameSpan, metaSpan);
+                button.addEventListener("mousedown", (event) => {
+                    event.preventDefault();
+                    selectPhotoInterno(row);
+                });
+                button.addEventListener("mouseenter", () => setActivePhotoSuggestion(index));
+                photoInternoSuggestions.appendChild(button);
+            });
+
+            photoInternoSuggestions.classList.add("visible");
+            setActivePhotoSuggestion(0);
+        };
+
+        const openPhotoModal = async () => {
+            if (!photoModalBackdrop) return;
+            photoModalBackdrop.classList.add("visible");
+            if (photoFormStatus) photoFormStatus.textContent = "Cargando internos desde la hoja internos...";
+            try {
+                if (!internosRows.length) await loadInternos();
+                if (selectedInterno) {
+                    selectedPhotoInterno = selectedInterno;
+                    if (photoInternoNameInput) photoInternoNameInput.value = selectedInterno.nombre || "";
+                    if (photoInternoLpuInput) photoInternoLpuInput.value = selectedInterno.lpu || "";
+                    if (photoFormStatus) photoFormStatus.textContent = "Datos cargados desde el interno seleccionado en el resumen.";
+                } else if (photoFormStatus) {
+                    photoFormStatus.textContent = "Seleccione un interno para completar el LPU correspondiente.";
+                }
+                photoInternoNameInput?.focus();
+                renderPhotoSuggestions(photoInternoNameInput?.value || "");
+            } catch (error) {
+                if (photoFormStatus) photoFormStatus.textContent = "No se pudo cargar la hoja internos. Verifique que el servidor local este iniciado.";
+            }
+        };
+
+        const closePhotoModal = () => {
+            photoModalBackdrop?.classList.remove("visible");
+            hidePhotoSuggestions();
         };
 
         const loadAlojamiento = async () => {
@@ -1616,6 +1838,74 @@
             if (!event.target.closest("#lpu-search") && !event.target.closest("#search-suggestions")) {
                 hideSuggestions();
             }
+            if (!event.target.closest("#photo-interno-name") && !event.target.closest("#photo-interno-suggestions")) {
+                hidePhotoSuggestions();
+            }
+        });
+
+        editPhotoButton?.addEventListener("click", () => {
+            openPhotoModal();
+        });
+
+        photoModalClose?.addEventListener("click", closePhotoModal);
+        photoFormCancel?.addEventListener("click", closePhotoModal);
+
+        photoModalBackdrop?.addEventListener("mousedown", (event) => {
+            if (event.target === photoModalBackdrop) closePhotoModal();
+        });
+
+        photoInternoNameInput?.addEventListener("focus", async () => {
+            try {
+                if (!internosRows.length) await loadInternos();
+                renderPhotoSuggestions(photoInternoNameInput.value);
+            } catch (error) {
+                if (photoFormStatus) photoFormStatus.textContent = "No se pudo cargar la hoja internos. Verifique que el servidor local este iniciado.";
+            }
+        });
+
+        photoInternoNameInput?.addEventListener("input", async () => {
+            selectedPhotoInterno = null;
+            if (photoInternoLpuInput) photoInternoLpuInput.value = "";
+            try {
+                if (!internosRows.length) await loadInternos();
+                renderPhotoSuggestions(photoInternoNameInput.value);
+            } catch (error) {
+                hidePhotoSuggestions();
+                if (photoFormStatus) photoFormStatus.textContent = "No se pudo cargar la hoja internos. Verifique que el servidor local este iniciado.";
+            }
+        });
+
+        photoInternoNameInput?.addEventListener("keydown", (event) => {
+            if (event.key === "ArrowDown" && currentPhotoSuggestions.length) {
+                event.preventDefault();
+                setActivePhotoSuggestion(activePhotoSuggestionIndex + 1);
+            } else if (event.key === "ArrowUp" && currentPhotoSuggestions.length) {
+                event.preventDefault();
+                setActivePhotoSuggestion(activePhotoSuggestionIndex - 1);
+            } else if (event.key === "Enter" && currentPhotoSuggestions[activePhotoSuggestionIndex]) {
+                event.preventDefault();
+                selectPhotoInterno(currentPhotoSuggestions[activePhotoSuggestionIndex]);
+            } else if (event.key === "Escape") {
+                hidePhotoSuggestions();
+            }
+        });
+
+        photoForm?.addEventListener("submit", (event) => {
+            event.preventDefault();
+            if (!selectedPhotoInterno || !photoInternoLpuInput?.value.trim()) {
+                if (photoFormStatus) photoFormStatus.textContent = "Seleccione una opcion de la hoja internos para completar el LPU antes de guardar.";
+                photoInternoNameInput?.focus();
+                return;
+            }
+
+            const cloudinaryUrl = photoCloudinaryUrlInput?.value.trim();
+            if (!cloudinaryUrl) {
+                if (photoFormStatus) photoFormStatus.textContent = "Pegue la URL de Cloudinary o conecte el preset de carga antes de guardar.";
+                photoCloudinaryUrlInput?.focus();
+                return;
+            }
+
+            if (photoFormStatus) photoFormStatus.textContent = `Referencia lista para LPU ${photoInternoLpuInput.value.trim()}. Falta conectar el guardado definitivo.`;
         });
 
         const setupTopicDropdowns = () => {

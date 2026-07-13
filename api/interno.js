@@ -20,11 +20,12 @@ module.exports = async function handler(req, res) {
 
     const url = new URL(req.url, "http://localhost");
     const lpu = url.searchParams.get("lpu") || "";
+    const forceRefresh = url.searchParams.has("_t") || url.searchParams.has("_sheetsRefresh");
     if (lpu) {
       return res.status(200).json(await findInternoByLpu(lpu));
     }
     // Sin lpu: devolver todos los internos
-    return res.status(200).json(await getInternosRows());
+    return res.status(200).json(await getInternosRows(forceRefresh));
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
