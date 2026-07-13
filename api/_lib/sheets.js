@@ -52,6 +52,23 @@ const SANCIONES_HEADERS = [
   "CONCEPTO FINALIZA",
   "FASE FINALIZA",
 ];
+const ALOJAMIENTO_OPTIONS = [
+  "ANEXO-PA",
+  "ANEXO-PB",
+  "ANEXO-PC",
+  "ANEXO-PD",
+  "FUNC. 2 PA",
+  "FUNC. 2 PB",
+  "FUNC. 3 PA",
+  "FUNC. 3 PB",
+  "FUNC. 4 PA",
+  "FUNC. 4 PB",
+  "SECT.POLI.TRAT. PA",
+  "SECT.POLI.TRAT. PB",
+  "SECT.POLI.TRAT. PC",
+  "SECT.POLI.TRAT. PD",
+  "SECT.POLI.TRAT. PE",
+];
 
 const base64Url = (value) =>
   Buffer.from(value)
@@ -554,6 +571,49 @@ const getInternosRows = async () => {
     .filter((row) => row.some((cell) => String(cell || "").trim() !== ""));
 
   return { headers, rows, cachedAt: new Date().toISOString() };
+};
+
+const appendInterno = async (interno = {}) => {
+  const idJudiciales = String(interno.idJudiciales ?? interno.ID_JUDICIALES ?? "").trim();
+  const alojamiento = String(interno.alojamiento ?? interno.ALOJAMIENTO ?? "").trim();
+  const celda = String(interno.celda ?? interno.CELDA ?? "").trim();
+  const apellidoNombre = String(interno.apellidoNombre ?? interno["APELLIDO Y NOMBRE"] ?? "").trim();
+  const lpu = String(interno.lpu ?? interno.LPU ?? "").trim();
+
+  if (!/^\d+$/.test(idJudiciales)) {
+    throw new Error("ID_JUDICIALES debe ser numerico.");
+  }
+  if (!ALOJAMIENTO_OPTIONS.includes(alojamiento)) {
+    throw new Error("Selecciona un alojamiento valido.");
+  }
+  if (!/^\d{2}$/.test(celda)) {
+    throw new Error("CELDA debe tener dos cifras.");
+  }
+  if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]+$/.test(apellidoNombre)) {
+    throw new Error("APELLIDO Y NOMBRE debe contener solo texto.");
+  }
+  if (!/^\d{6}$/.test(lpu)) {
+    throw new Error("LPU debe tener seis cifras.");
+  }
+
+  const { headers } = await getInternosRows();
+  const columnCount = Math.max(headers.length, 5);
+  const rowValues = Array.from({ length: columnCount }, () => "");
+  const fields = [
+    { value: idJudiciales, candidates: ["ID_JUDICIALES", "ID JUDICIALES", "ID JUDICIAL"] },
+    { value: alojamiento, candidates: ["ALOJAMIENTO", "ALOJADO"] },
+    { value: celda, candidates: ["CELDA"] },
+    { value: apellidoNombre.toUpperCase(), candidates: ["APELLIDO Y NOMBRE", "INTERNO", "NOMBRE"] },
+    { value: lpu, candidates: ["LPU", "L.P.U.", "L.P.U", "L.P.U. N", "L.P.U. N°"] },
+  ];
+
+  fields.forEach(({ value, candidates }, fallbackIndex) => {
+    const index = findHeaderIndex(headers, candidates);
+    rowValues[index >= 0 ? index : fallbackIndex] = value;
+  });
+
+  await appendSheetRows(INTERNOS_RANGE, [rowValues]);
+  return getInternosRows();
 };
 
 const uniqueSortedValues = (values) => [...new Set(values
@@ -1331,6 +1391,7 @@ const getParteDiarioArchivado = async () => {
 module.exports = {
   getConsejoRows,
   getInternosRows,
+  appendInterno,
   insertConsejoRow,
   updateConsejoRow,
   deleteConsejoRow,

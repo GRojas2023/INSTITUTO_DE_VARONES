@@ -72,6 +72,17 @@
         body.sidebar-collapsed .sidebar-toggle {
             left: 12px;
         }
+
+        body > aside,
+        body > #sidebar-toggle {
+            display: none !important;
+        }
+
+        .ml-\[240px\],
+        .content-shell {
+            margin-left: 0 !important;
+            width: 100% !important;
+        }
     </style>
 </head>
 <body class="min-h-screen text-on-surface">
@@ -99,10 +110,6 @@
                 href="panel_de_visualizacion.html">
                 <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
                 <span class="text-sm">Panel de Visualizacion</span>
-            </a>            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
-                href="consejo_correccional.html" target="_blank" rel="noopener noreferrer">
-                <span class="material-symbols-outlined" data-icon="gavel">gavel</span>
-                <span class="text-sm">Consejo Correccional</span>
             </a>            <a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container font-bold border-r-4 border-primary transition-all active:translate-x-1 duration-200"
                 href="atenciones.html">
                 <span class="material-symbols-outlined" data-icon="campaign">campaign</span>

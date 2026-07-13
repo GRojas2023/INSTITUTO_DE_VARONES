@@ -146,6 +146,104 @@
             cursor: not-allowed;
         }
 
+        .new-interno-panel {
+            display: none;
+            border: 1px solid #c2c7d1;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 10px 24px rgba(0, 53, 95, 0.1);
+            overflow: hidden;
+        }
+
+        .new-interno-panel.open {
+            display: block;
+        }
+
+        .new-interno-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 18px;
+            border-bottom: 1px solid #c2c7d1;
+            background: #f7f9fb;
+        }
+
+        .new-interno-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(140px, 1fr));
+            gap: 14px;
+            padding: 16px 18px;
+        }
+
+        .new-interno-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .new-interno-field label {
+            color: #42474f;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .new-interno-field input,
+        .new-interno-field select {
+            height: 38px;
+            width: 100%;
+            border: 1px solid #c2c7d1;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #191c1e;
+            font-size: 14px;
+            padding: 0 10px;
+            outline: none;
+        }
+
+        .new-interno-field input:focus,
+        .new-interno-field select:focus {
+            border-color: #00355f;
+            box-shadow: 0 0 0 2px rgba(0, 53, 95, 0.15);
+        }
+
+        .new-interno-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            padding: 0 18px 16px;
+        }
+
+        .new-interno-status {
+            margin-right: auto;
+            color: #42474f;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .new-interno-status.error {
+            color: #b71c1c;
+        }
+
+        .new-interno-status.success {
+            color: #1b5e20;
+        }
+
+        @media (max-width: 1180px) {
+            .new-interno-grid {
+                grid-template-columns: repeat(2, minmax(180px, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .new-interno-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .table-wrap {
             overflow: auto;
             flex: 1;
@@ -529,6 +627,17 @@
         body.sidebar-collapsed .sidebar-toggle {
             left: 12px;
         }
+
+        body > aside,
+        body > #sidebar-toggle {
+            display: none !important;
+        }
+
+        .ml-\[240px\],
+        .content-shell {
+            margin-left: 0 !important;
+            width: 100% !important;
+        }
     </style>
 </head>
 <body class="min-h-screen text-on-surface">
@@ -556,10 +665,6 @@
                 href="panel_de_visualizacion.html">
                 <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
                 <span class="text-sm">Panel de Visualizacion</span>
-            </a>            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
-                href="consejo_correccional.html" target="_blank" rel="noopener noreferrer">
-                <span class="material-symbols-outlined" data-icon="gavel">gavel</span>
-                <span class="text-sm">Consejo Correccional</span>
             </a>            <a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-all active:translate-x-1 duration-200"
                 href="atenciones.html">
                 <span class="material-symbols-outlined" data-icon="campaign">campaign</span>
@@ -598,10 +703,57 @@
                     <span class="material-symbols-outlined text-lg">refresh</span>
                     Actualizar
                 </button>
+                <button id="new-interno-toggle" class="flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-container transition-colors" type="button" title="Cargar nuevo interno">
+                    <span class="material-symbols-outlined text-lg">person_add</span>
+                    NUEVO INTERNO
+                </button>
             </div>
         </header>
 
         <main class="p-6 flex-1 flex flex-col gap-5">
+            <section class="new-interno-panel" id="new-interno-panel" aria-label="Formulario nuevo interno">
+                <div class="new-interno-header">
+                    <h3 class="m-0 text-base font-bold text-primary">Nuevo interno</h3>
+                    <button id="new-interno-close" class="page-btn" type="button" aria-label="Cerrar formulario" title="Cerrar formulario">
+                        <span class="material-symbols-outlined text-lg">close</span>
+                    </button>
+                </div>
+                <form id="new-interno-form">
+                    <div class="new-interno-grid">
+                        <div class="new-interno-field">
+                            <label for="new-id-judiciales">ID_JUDICIALES</label>
+                            <input id="new-id-judiciales" name="idJudiciales" type="number" inputmode="numeric" min="0" step="1" required>
+                        </div>
+                        <div class="new-interno-field">
+                            <label for="new-alojamiento">ALOJAMIENTO</label>
+                            <select id="new-alojamiento" name="alojamiento" required>
+                                <option value="">Seleccionar</option>
+                            </select>
+                        </div>
+                        <div class="new-interno-field">
+                            <label for="new-celda">CELDA</label>
+                            <input id="new-celda" name="celda" type="text" inputmode="numeric" pattern="\d{2}" maxlength="2" placeholder="00" required>
+                        </div>
+                        <div class="new-interno-field">
+                            <label for="new-apellido-nombre">APELLIDO Y NOMBRE</label>
+                            <input id="new-apellido-nombre" name="apellidoNombre" type="text" pattern="[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]+" autocomplete="off" required>
+                        </div>
+                        <div class="new-interno-field">
+                            <label for="new-lpu">LPU</label>
+                            <input id="new-lpu" name="lpu" type="text" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="000000" required>
+                        </div>
+                    </div>
+                    <div class="new-interno-actions">
+                        <span class="new-interno-status" id="new-interno-status" aria-live="polite"></span>
+                        <button class="download-excel-btn" id="new-interno-cancel" type="button">Cancelar</button>
+                        <button class="download-excel-btn" id="new-interno-submit" type="submit">
+                            <span class="material-symbols-outlined text-lg">save</span>
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </section>
+
             <!-- Metrics row -->
             <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="metrics-row">
                 <div class="metric-card">
@@ -705,6 +857,14 @@
         const prevPageButton = document.querySelector("#prev-page");
         const nextPageButton = document.querySelector("#next-page");
         const refreshButton = document.querySelector("#refresh-btn");
+        const newInternoToggle = document.querySelector("#new-interno-toggle");
+        const newInternoPanel = document.querySelector("#new-interno-panel");
+        const newInternoClose = document.querySelector("#new-interno-close");
+        const newInternoCancel = document.querySelector("#new-interno-cancel");
+        const newInternoForm = document.querySelector("#new-interno-form");
+        const newInternoStatus = document.querySelector("#new-interno-status");
+        const newInternoSubmit = document.querySelector("#new-interno-submit");
+        const newAlojamientoSelect = document.querySelector("#new-alojamiento");
         const metricTotal = document.querySelector("#metric-total");
         const metricCondenados = document.querySelector("#metric-condenados");
         const metricCondenadosPct = document.querySelector("#metric-condenados-pct");
@@ -714,6 +874,23 @@
         const minColumnWidth = 70;
         const spreadsheetId = "1DuK6GHozJGHSUQ7TVDIKODDm5XJnNpq9k9lheHWLvHE";
         const sheetName = "internos";
+        const alojamientoOptions = [
+            "ANEXO-PA",
+            "ANEXO-PB",
+            "ANEXO-PC",
+            "ANEXO-PD",
+            "FUNC. 2 PA",
+            "FUNC. 2 PB",
+            "FUNC. 3 PA",
+            "FUNC. 3 PB",
+            "FUNC. 4 PA",
+            "FUNC. 4 PB",
+            "SECT.POLI.TRAT. PA",
+            "SECT.POLI.TRAT. PB",
+            "SECT.POLI.TRAT. PC",
+            "SECT.POLI.TRAT. PD",
+            "SECT.POLI.TRAT. PE",
+        ];
 
         let pageSize = Number(pageSizeSelect?.value || 50);
         let tableHeaders = [];
@@ -731,6 +908,13 @@
             ? "http://127.0.0.1:8780/api/interno"
             : "/api/interno";
 
+        alojamientoOptions.forEach((value) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = value;
+            newAlojamientoSelect?.appendChild(option);
+        });
+
         const normalizeSearchText = (value) => String(value || "")
             .toLowerCase()
             .normalize("NFD")
@@ -742,6 +926,15 @@
             const keys = candidates.map(normalizeKey);
             return headers.findIndex((h) => keys.includes(normalizeKey(h)));
         };
+
+        const hiddenTableColumnKeys = new Set(["column52", "idjudiciales"]);
+
+        const isHiddenTableColumn = (header) => hiddenTableColumnKeys.has(normalizeKey(header));
+
+        const getVisibleColumnIndexes = () => tableHeaders
+            .map((header, index) => ({ header, index }))
+            .filter(({ header }) => !isHiddenTableColumn(header))
+            .map(({ index }) => index);
 
         const formatCell = (cell) => {
             if (!cell) return "";
@@ -764,11 +957,12 @@
         const downloadFilteredExcel = () => {
             if (!tableHeaders.length || !tableRows.length) return;
 
-            const headerCells = tableHeaders
-                .map((header) => `<th>${escapeHtml(header)}</th>`)
+            const visibleColumnIndexes = getVisibleColumnIndexes();
+            const headerCells = visibleColumnIndexes
+                .map((colIdx) => `<th>${escapeHtml(tableHeaders[colIdx])}</th>`)
                 .join("");
             const bodyRows = tableRows.map((row) => {
-                const cells = tableHeaders.map((_, colIdx) =>
+                const cells = visibleColumnIndexes.map((colIdx) =>
                     `<td style="mso-number-format:'\\@';">${escapeHtml(row[colIdx] || "")}</td>`
                 ).join("");
                 return `<tr>${cells}</tr>`;
@@ -860,7 +1054,7 @@
         const updateMetrics = () => {
             const total = allTableRows.length;
             metricTotal.textContent = total;
-            metricColumns.textContent = tableHeaders.length;
+            metricColumns.textContent = getVisibleColumnIndexes().length;
 
             const situacionIndex = findHeaderIndex(tableHeaders, ["SITUACION LEGAL", "SITUACION"]);
             let condenados = 0;
@@ -916,6 +1110,8 @@
             filterRow.style.display = "";
 
             tableHeaders.forEach((header, colIdx) => {
+                if (isHiddenTableColumn(header)) return;
+
                 const th = document.createElement("th");
 
                 if (isAlojamientoHeader(header)) {
@@ -1058,12 +1254,16 @@
         const applyFilters = () => {
             const query = normalizeSearchText(tableSearch?.value || "").trim();
             const activeFilterEntries = Object.entries(columnFilters);
+            const visibleColumnIndexes = getVisibleColumnIndexes();
 
             const filtered = allTableRows
                 .map((row, index) => ({ row, rowNumber: allTableRowNumbers[index] }))
                 .filter(({ row }) => {
                     // Global search
-                    if (query && !normalizeSearchText(row.join(" ")).includes(query)) {
+                    const visibleSearchText = visibleColumnIndexes
+                        .map((colIdx) => row[colIdx] || "")
+                        .join(" ");
+                    if (query && !normalizeSearchText(visibleSearchText).includes(query)) {
                         return false;
                     }
                     // Column filters
@@ -1122,6 +1322,82 @@
             applyFilters();
         };
 
+        const setNewInternoStatus = (message, type = "") => {
+            if (!newInternoStatus) return;
+            newInternoStatus.textContent = message;
+            newInternoStatus.classList.toggle("error", type === "error");
+            newInternoStatus.classList.toggle("success", type === "success");
+        };
+
+        const setNewInternoPanelOpen = (open) => {
+            newInternoPanel?.classList.toggle("open", open);
+            if (open) {
+                setNewInternoStatus("");
+                document.querySelector("#new-id-judiciales")?.focus();
+            }
+        };
+
+        const validateNewInterno = (data) => {
+            if (!/^\d+$/.test(data.idJudiciales)) return "ID_JUDICIALES debe ser numerico.";
+            if (!alojamientoOptions.includes(data.alojamiento)) return "Selecciona un alojamiento valido.";
+            if (!/^\d{2}$/.test(data.celda)) return "CELDA debe tener dos cifras.";
+            if (!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s.'-]+$/.test(data.apellidoNombre)) return "APELLIDO Y NOMBRE debe contener solo texto.";
+            if (!/^\d{6}$/.test(data.lpu)) return "LPU debe tener seis cifras.";
+            return "";
+        };
+
+        const submitNewInterno = async (event) => {
+            event.preventDefault();
+            if (!newInternoForm) return;
+
+            const formData = new FormData(newInternoForm);
+            const data = {
+                idJudiciales: String(formData.get("idJudiciales") || "").trim(),
+                alojamiento: String(formData.get("alojamiento") || "").trim(),
+                celda: String(formData.get("celda") || "").trim(),
+                apellidoNombre: String(formData.get("apellidoNombre") || "").trim(),
+                lpu: String(formData.get("lpu") || "").trim(),
+            };
+            const error = validateNewInterno(data);
+            if (error) {
+                setNewInternoStatus(error, "error");
+                return;
+            }
+
+            setNewInternoStatus("Guardando...");
+            if (newInternoSubmit) newInternoSubmit.disabled = true;
+
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(result.error || "No se pudo guardar el interno.");
+                }
+
+                newInternoForm.reset();
+                setNewInternoStatus("Interno guardado correctamente.", "success");
+                renderTable(result.headers || [], result.rows || [], result.rowNumbers || []);
+            } catch (saveError) {
+                setNewInternoStatus(saveError.message || "No se pudo guardar el interno.", "error");
+            } finally {
+                if (newInternoSubmit) newInternoSubmit.disabled = false;
+            }
+        };
+
+        newInternoToggle?.addEventListener("click", () => {
+            setNewInternoPanelOpen(!newInternoPanel?.classList.contains("open"));
+        });
+        newInternoClose?.addEventListener("click", () => setNewInternoPanelOpen(false));
+        newInternoCancel?.addEventListener("click", () => {
+            newInternoForm?.reset();
+            setNewInternoPanelOpen(false);
+        });
+        newInternoForm?.addEventListener("submit", submitNewInterno);
+
         const getSituacionClass = (value) => {
             const normalized = normalizeKey(value || "");
             if (normalized.includes("condenad")) return "status-condenado";
@@ -1143,9 +1419,9 @@
 
             if (tableHeaders.length) {
                 headerRow.innerHTML = "";
-                tableHeaders.forEach((headerText) => {
+                getVisibleColumnIndexes().forEach((colIdx) => {
                     const th = document.createElement("th");
-                    th.textContent = headerText;
+                    th.textContent = tableHeaders[colIdx];
                     headerRow.appendChild(th);
                 });
             }
@@ -1153,9 +1429,8 @@
             tbody.innerHTML = "";
             visibleRows.forEach((row) => {
                 const tr = document.createElement("tr");
-                const columnTotal = tableHeaders.length;
 
-                for (let colIdx = 0; colIdx < columnTotal; colIdx++) {
+                getVisibleColumnIndexes().forEach((colIdx) => {
                     const td = document.createElement("td");
                     const value = row[colIdx] || "";
 
@@ -1173,7 +1448,7 @@
                     }
 
                     tr.appendChild(td);
-                }
+                });
 
                 tbody.appendChild(tr);
             });
