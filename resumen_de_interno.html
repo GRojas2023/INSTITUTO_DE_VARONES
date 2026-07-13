@@ -359,17 +359,25 @@
             max-width: 100vw;
         }
 
-        #module-frame {
+        #module-content {
             display: none;
             width: 100%;
             min-height: calc(100vh - 56px);
-            border: 0;
             background: #f7f9fb;
         }
 
-        #module-frame.active {
+        #module-content.active {
             display: block;
             flex: 1;
+        }
+
+        #module-content > .module-loading,
+        #module-content > .module-error {
+            min-height: calc(100vh - 56px);
+            display: grid;
+            place-items: center;
+            color: #42474f;
+            font-weight: 600;
         }
     </style>
 
@@ -859,7 +867,7 @@
                 </section>
             </div>
         </main>
-        <iframe id="module-frame" title="Modulo seleccionado"></iframe>
+        <section id="module-content" aria-live="polite"></section>
     </div>
 
 
@@ -867,8 +875,10 @@
         (() => {
             const nav = document.querySelector("#sidebar-nav");
             const summary = document.querySelector("#summary-content");
-            const frame = document.querySelector("#module-frame");
+            const moduleContent = document.querySelector("#module-content");
             const links = Array.from(document.querySelectorAll("[data-shell-view], [data-shell-src]"));
+            let moduleLoadId = 0;
+            let moduleCleanup = null;
 
             const setActiveLink = (activeLink) => {
                 links.forEach((link) => {
@@ -883,22 +893,89 @@
                 });
             };
 
+            const clearModule = () => {
+                moduleLoadId += 1;
+                if (typeof moduleCleanup === "function") moduleCleanup();
+                moduleCleanup = null;
+                moduleContent.classList.remove("active");
+                moduleContent.innerHTML = "";
+            };
+
             const showSummary = () => {
-                frame.classList.remove("active");
-                frame.removeAttribute("src");
+                clearModule();
                 summary.classList.remove("hidden");
-                history.replaceState(null, "", location.pathname);
+                history.replaceState(null, "", `${location.pathname}${location.search}`);
                 setActiveLink(document.querySelector("[data-shell-view='summary']"));
             };
 
-            const showModule = (src, link, replace = false) => {
+            const sanitizeModuleStyle = (cssText) => cssText
+                .replace(/body\s*>\s*aside\s*,\s*body\s*>\s*#sidebar-toggle\s*\{[^}]*\}/g, "")
+                .replace(/\.ml-\\\[240px\\\]\s*,\s*\.content-shell\s*\{[^}]*\}/g, "");
+
+            const executeModuleScripts = (scripts, loadId) => {
+                const executedScripts = [];
+                scripts.forEach((oldScript) => {
+                    if (loadId !== moduleLoadId || oldScript.id === "sidebar-toggle-script") return;
+                    const script = document.createElement("script");
+                    Array.from(oldScript.attributes).forEach((attr) => script.setAttribute(attr.name, attr.value));
+                    if (oldScript.src) {
+                        script.src = oldScript.src;
+                    } else {
+                        script.textContent = `(() => {\n${oldScript.textContent || ""}\n})();`;
+                    }
+                    moduleContent.appendChild(script);
+                    executedScripts.push(script);
+                });
+                moduleCleanup = () => executedScripts.forEach((script) => script.remove());
+            };
+
+            const renderModuleDocument = (html, src, loadId) => {
+                if (loadId !== moduleLoadId) return;
+                const doc = new DOMParser().parseFromString(html, "text/html");
+                const styles = Array.from(doc.head.querySelectorAll("style"))
+                    .map((style) => `<style>${sanitizeModuleStyle(style.textContent || "")}</style>`)
+                    .join("");
+                const body = doc.body.cloneNode(true);
+                body.querySelector("aside")?.remove();
+                body.querySelector("#sidebar-toggle")?.remove();
+                body.querySelectorAll(".ml-\\[240px\\]").forEach((element) => {
+                    element.classList.remove("ml-[240px]");
+                    element.style.marginLeft = "0";
+                });
+                body.querySelectorAll(".content-shell").forEach((element) => {
+                    element.style.marginLeft = "0";
+                    element.style.width = "100%";
+                });
+                const scripts = Array.from(body.querySelectorAll("script"));
+                scripts.forEach((script) => script.remove());
+                const wrapper = document.createElement("div");
+                wrapper.className = "module-document";
+                wrapper.innerHTML = `${styles}${body.innerHTML}`;
+                moduleContent.innerHTML = "";
+                moduleContent.appendChild(wrapper);
+                executeModuleScripts(scripts, loadId);
+                window.scrollTo({ top: 0, behavior: "auto" });
+            };
+
+            const showModule = async (src, link, replace = false) => {
+                const loadId = ++moduleLoadId;
+                if (typeof moduleCleanup === "function") moduleCleanup();
+                moduleCleanup = null;
                 summary.classList.add("hidden");
-                frame.src = src;
-                frame.classList.add("active");
+                moduleContent.classList.add("active");
+                moduleContent.innerHTML = '<div class="module-loading">Cargando modulo...</div>';
                 setActiveLink(link);
                 const hash = `#${src}`;
                 if (replace) history.replaceState(null, "", hash);
                 else history.pushState(null, "", hash);
+                try {
+                    const response = await fetch(src, { cache: "no-cache" });
+                    if (!response.ok) throw new Error(`No se pudo cargar ${src}.`);
+                    renderModuleDocument(await response.text(), src, loadId);
+                } catch (error) {
+                    if (loadId !== moduleLoadId) return;
+                    moduleContent.innerHTML = `<div class="module-error">${error.message || "No se pudo cargar el modulo."}</div>`;
+                }
             };
 
             nav?.addEventListener("click", (event) => {
