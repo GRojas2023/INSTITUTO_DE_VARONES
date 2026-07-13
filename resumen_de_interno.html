@@ -1203,6 +1203,35 @@
             placeholder?.classList.add("hidden");
         };
 
+        const compressImageFile = async (file, maxSize = 800, quality = 0.82) => {
+            if (!file?.type?.startsWith("image/")) {
+                throw new Error("Seleccione un archivo de imagen valido.");
+            }
+
+            const bitmap = await createImageBitmap(file);
+            const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+            const width = Math.max(1, Math.round(bitmap.width * scale));
+            const height = Math.max(1, Math.round(bitmap.height * scale));
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const context = canvas.getContext("2d", { alpha: false });
+            context.drawImage(bitmap, 0, 0, width, height);
+
+            const blob = await new Promise((resolve) => {
+                canvas.toBlob(resolve, "image/jpeg", quality);
+            });
+
+            bitmap.close?.();
+            if (!blob) throw new Error("No se pudo comprimir la foto seleccionada.");
+
+            const originalName = file.name.replace(/\.[^.]+$/, "");
+            return new File([blob], `${originalName || "foto"}-800.jpg`, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+            });
+        };
+
         const loadInternoPhoto = async (lpu) => {
             const token = ++photoLoadToken;
             clearInternoPhoto();
@@ -1949,7 +1978,7 @@
                 return;
             }
 
-            if (photoFormStatus) photoFormStatus.textContent = "Subiendo foto a Cloudinary...";
+            if (photoFormStatus) photoFormStatus.textContent = "Comprimiendo foto a 800x800...";
             fetch(apiFotoInternoEndpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -1963,9 +1992,13 @@
                     if (!response.ok) throw new Error(data.error || "No se pudo preparar la subida.");
                     return data;
                 })
-                .then((signatureData) => {
+                .then(async (signatureData) => {
+                    const optimizedFile = await compressImageFile(file);
+                    const originalKb = Math.round(file.size / 1024);
+                    const optimizedKb = Math.round(optimizedFile.size / 1024);
+                    if (photoFormStatus) photoFormStatus.textContent = `Foto optimizada de ${originalKb} KB a ${optimizedKb} KB. Subiendo a Cloudinary...`;
                     const formData = new FormData();
-                    formData.set("file", file);
+                    formData.set("file", optimizedFile);
                     Object.entries(signatureData.fields || {}).forEach(([key, value]) => {
                         formData.set(key, String(value));
                     });
