@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const { execFile } = require("child_process");
-const { uploadInternoPhoto } = require("./api/_lib/cloudinary");
+const { createInternoPhotoUploadSignature } = require("./api/_lib/cloudinary");
 const fs = require("fs/promises");
 const http = require("http");
 const os = require("os");
@@ -2380,8 +2380,8 @@ const server = http.createServer(async (req, res) => {
 
   if (req.url.startsWith("/api/fotos/interno") && req.method === "POST") {
     try {
-      const body = await readJsonBody(req, 8 * 1024 * 1024);
-      sendJson(res, 201, await uploadInternoPhoto(body || {}));
+      const body = await readJsonBody(req);
+      sendJson(res, 200, createInternoPhotoUploadSignature(body || {}));
     } catch (error) {
       sendJson(res, 500, { error: error.message });
     }

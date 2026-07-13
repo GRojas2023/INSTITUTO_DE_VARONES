@@ -1,4 +1,4 @@
-const { uploadInternoPhoto } = require("../_lib/cloudinary");
+const { createInternoPhotoUploadSignature } = require("../_lib/cloudinary");
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    return res.status(201).json(await uploadInternoPhoto(req.body || {}));
+    return res.status(200).json(createInternoPhotoUploadSignature(req.body || {}));
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

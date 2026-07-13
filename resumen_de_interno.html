@@ -1441,13 +1441,6 @@
             hidePhotoSuggestions();
         };
 
-        const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result || ""));
-            reader.onerror = () => reject(new Error("No se pudo leer la foto seleccionada."));
-            reader.readAsDataURL(file);
-        });
-
         const setInternoPhoto = (url) => {
             if (!internoPhotoImg || !url) return;
             const placeholder = internoPhotoImg.parentElement?.querySelector(".material-symbols-outlined");
@@ -1922,20 +1915,36 @@
             }
 
             if (photoFormStatus) photoFormStatus.textContent = "Subiendo foto a Cloudinary...";
-            readFileAsDataUrl(file)
-                .then((fileData) => fetch(apiFotoInternoEndpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        interno: photoInternoNameInput?.value.trim() || "",
-                        lpu: photoInternoLpuInput.value.trim(),
-                        fileData,
-                    }),
-                }))
+            fetch(apiFotoInternoEndpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    interno: photoInternoNameInput?.value.trim() || "",
+                    lpu: photoInternoLpuInput.value.trim(),
+                }),
+            })
                 .then(async (response) => {
                     const data = await response.json().catch(() => ({}));
-                    if (!response.ok) throw new Error(data.error || "No se pudo subir la foto.");
-                    setInternoPhoto(data.secureUrl);
+                    if (!response.ok) throw new Error(data.error || "No se pudo preparar la subida.");
+                    return data;
+                })
+                .then((signatureData) => {
+                    const formData = new FormData();
+                    formData.set("file", file);
+                    Object.entries(signatureData.fields || {}).forEach(([key, value]) => {
+                        formData.set(key, String(value));
+                    });
+                    return fetch(signatureData.uploadUrl, {
+                        method: "POST",
+                        body: formData,
+                    }).then(async (response) => {
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok) throw new Error(data.error?.message || "No se pudo subir la foto a Cloudinary.");
+                        return { ...data, lpu: signatureData.lpu };
+                    });
+                })
+                .then((data) => {
+                    setInternoPhoto(data.secure_url);
                     if (photoFormStatus) photoFormStatus.textContent = `Foto subida correctamente para LPU ${data.lpu}.`;
                 })
                 .catch((error) => {
