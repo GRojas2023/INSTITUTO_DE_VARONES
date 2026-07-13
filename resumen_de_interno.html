@@ -1946,6 +1946,10 @@
                 .then((data) => {
                     setInternoPhoto(data.secure_url);
                     if (photoFormStatus) photoFormStatus.textContent = `Foto subida correctamente para LPU ${data.lpu}.`;
+                    setTimeout(() => {
+                        closePhotoModal();
+                        if (photoFileInput) photoFileInput.value = "";
+                    }, 700);
                 })
                 .catch((error) => {
                     if (photoFormStatus) photoFormStatus.textContent = error.message || "No se pudo subir la foto.";
