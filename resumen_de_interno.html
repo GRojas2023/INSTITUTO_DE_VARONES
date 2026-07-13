@@ -539,6 +539,7 @@
                 class="summary-hero-card bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-8 flex flex-col md:flex-row gap-8 items-start">
                 <div class="relative group">
                     <div class="rounded-xl shadow-md w-48 h-48 bg-surface-container-high border border-outline-variant flex items-center justify-center overflow-hidden" aria-label="Silueta de persona sin rostro">
+                        <img id="interno-photo-img" alt="Foto del interno" class="hidden w-full h-full object-cover">
                         <span class="material-symbols-outlined text-primary/60" style="font-size: 132px;">person</span>
                     </div>
                     <button
@@ -953,17 +954,13 @@
                     </div>
                     <div class="photo-form-field">
                         <label for="photo-file">Foto</label>
-                        <input id="photo-file" name="foto" type="file" accept="image/*">
-                    </div>
-                    <div class="photo-form-field">
-                        <label for="photo-cloudinary-url">URL de Cloudinary</label>
-                        <input id="photo-cloudinary-url" name="cloudinaryUrl" type="url" placeholder="https://res.cloudinary.com/...">
+                        <input id="photo-file" name="foto" type="file" accept="image/jpeg,image/png,image/webp">
                     </div>
                     <p id="photo-form-status" class="text-body-sm text-on-surface-variant">Seleccione un interno para completar el LPU correspondiente.</p>
                 </div>
                 <div class="px-6 py-4 border-t border-outline-variant flex flex-col sm:flex-row justify-end gap-3 bg-surface-container-low">
                     <button id="photo-form-cancel" type="button" class="px-4 py-2 rounded-lg border border-outline-variant text-primary font-bold hover:bg-surface-container-high">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary font-bold hover:brightness-110">Guardar referencia</button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary font-bold hover:brightness-110">Subir foto</button>
                 </div>
             </form>
         </div>
@@ -1114,6 +1111,9 @@
         const apiNovedadesEndpoint = window.location.protocol === "file:"
             ? "http://127.0.0.1:8780/api/novedades"
             : "/api/novedades";
+        const apiFotoInternoEndpoint = window.location.protocol === "file:"
+            ? "http://127.0.0.1:8780/api/fotos/interno"
+            : "/api/fotos/interno";
 
         const lpuSearchInput = document.querySelector("#lpu-search");
         const searchSuggestions = document.querySelector("#search-suggestions");
@@ -1130,8 +1130,9 @@
         const photoInternoNameInput = document.querySelector("#photo-interno-name");
         const photoInternoLpuInput = document.querySelector("#photo-interno-lpu");
         const photoInternoSuggestions = document.querySelector("#photo-interno-suggestions");
-        const photoCloudinaryUrlInput = document.querySelector("#photo-cloudinary-url");
+        const photoFileInput = document.querySelector("#photo-file");
         const photoFormStatus = document.querySelector("#photo-form-status");
+        const internoPhotoImg = document.querySelector("#interno-photo-img");
 
         let internosHeaders = [];
         let internosRows = [];
@@ -1438,6 +1439,21 @@
         const closePhotoModal = () => {
             photoModalBackdrop?.classList.remove("visible");
             hidePhotoSuggestions();
+        };
+
+        const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ""));
+            reader.onerror = () => reject(new Error("No se pudo leer la foto seleccionada."));
+            reader.readAsDataURL(file);
+        });
+
+        const setInternoPhoto = (url) => {
+            if (!internoPhotoImg || !url) return;
+            const placeholder = internoPhotoImg.parentElement?.querySelector(".material-symbols-outlined");
+            internoPhotoImg.src = url;
+            internoPhotoImg.classList.remove("hidden");
+            placeholder?.classList.add("hidden");
         };
 
         const loadAlojamiento = async () => {
@@ -1898,14 +1914,33 @@
                 return;
             }
 
-            const cloudinaryUrl = photoCloudinaryUrlInput?.value.trim();
-            if (!cloudinaryUrl) {
-                if (photoFormStatus) photoFormStatus.textContent = "Pegue la URL de Cloudinary o conecte el preset de carga antes de guardar.";
-                photoCloudinaryUrlInput?.focus();
+            const file = photoFileInput?.files?.[0];
+            if (!file) {
+                if (photoFormStatus) photoFormStatus.textContent = "Seleccione una foto JPG, PNG o WEBP para subir.";
+                photoFileInput?.focus();
                 return;
             }
 
-            if (photoFormStatus) photoFormStatus.textContent = `Referencia lista para LPU ${photoInternoLpuInput.value.trim()}. Falta conectar el guardado definitivo.`;
+            if (photoFormStatus) photoFormStatus.textContent = "Subiendo foto a Cloudinary...";
+            readFileAsDataUrl(file)
+                .then((fileData) => fetch(apiFotoInternoEndpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        interno: photoInternoNameInput?.value.trim() || "",
+                        lpu: photoInternoLpuInput.value.trim(),
+                        fileData,
+                    }),
+                }))
+                .then(async (response) => {
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(data.error || "No se pudo subir la foto.");
+                    setInternoPhoto(data.secureUrl);
+                    if (photoFormStatus) photoFormStatus.textContent = `Foto subida correctamente para LPU ${data.lpu}.`;
+                })
+                .catch((error) => {
+                    if (photoFormStatus) photoFormStatus.textContent = error.message || "No se pudo subir la foto.";
+                });
         });
 
         const setupTopicDropdowns = () => {

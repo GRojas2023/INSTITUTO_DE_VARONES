@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { execFile } = require("child_process");
+const { uploadInternoPhoto } = require("./api/_lib/cloudinary");
 const fs = require("fs/promises");
 const http = require("http");
 const os = require("os");
@@ -1770,12 +1771,12 @@ const updateTramites = async (tramites) => {
   return getTramites(true);
 };
 
-const readJsonBody = (req) => new Promise((resolve, reject) => {
+const readJsonBody = (req, maxBytes = 1024 * 1024) => new Promise((resolve, reject) => {
   let body = "";
 
   req.on("data", (chunk) => {
     body += chunk;
-    if (body.length > 1024 * 1024) {
+    if (body.length > maxBytes) {
       req.destroy();
       reject(new Error("El formulario es demasiado grande."));
     }
@@ -2371,6 +2372,16 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       sendJson(res, 201, await appendInterno(body || {}));
+    } catch (error) {
+      sendJson(res, 500, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.url.startsWith("/api/fotos/interno") && req.method === "POST") {
+    try {
+      const body = await readJsonBody(req, 8 * 1024 * 1024);
+      sendJson(res, 201, await uploadInternoPhoto(body || {}));
     } catch (error) {
       sendJson(res, 500, { error: error.message });
     }
