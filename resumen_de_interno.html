@@ -1041,6 +1041,7 @@
         let sancionesRows = [];
         let novedadesHeaders = [];
         let novedadesRows = [];
+        let openTopicByLabel = () => {};
 
         const normalizeText = (value) => String(value || "")
             .toLowerCase()
@@ -1120,7 +1121,7 @@
         const selectInterno = (row) => {
             hideSuggestions();
             renderInterno(row);
-            refreshActiveTopic();
+            openTopicByLabel("NOVEDADES");
             if (lpuSearchInput) {
                 lpuSearchInput.value = "";
                 lpuSearchInput.focus();
@@ -1668,6 +1669,32 @@
                 });
             };
 
+            const loadTopic = (label) => {
+                if (label === "ALOJAMIENTO") {
+                    loadSelectedAlojamiento();
+                } else if (label === "TRAMITES INTERDISCIPLINARIOS") {
+                    loadSelectedConsejo();
+                } else if (label === "SANCIONES") {
+                    loadSelectedSanciones();
+                } else if (label === "NOVEDADES") {
+                    loadSelectedNovedades();
+                }
+            };
+
+            openTopicByLabel = (targetLabel) => {
+                const sectionData = sections.find((item) => item.label === targetLabel);
+                if (!sectionData) return;
+                const button = Array.from(tabs.querySelectorAll(".topic-tab")).find((tab) =>
+                    tab.querySelector("span:first-child")?.textContent?.trim() === targetLabel
+                );
+                closeAll();
+                sectionData.section.classList.remove("empty-topic");
+                sectionData.section.classList.add("active");
+                button?.classList.add("active");
+                button?.setAttribute("aria-expanded", "true");
+                loadTopic(targetLabel);
+            };
+
             sections.forEach(({ label, section }, index) => {
                 const button = document.createElement("button");
                 button.type = "button";
@@ -1682,15 +1709,7 @@
                         section.classList.add("active");
                         button.classList.add("active");
                         button.setAttribute("aria-expanded", "true");
-                        if (label === "ALOJAMIENTO") {
-                            loadSelectedAlojamiento();
-                        } else if (label === "TRAMITES INTERDISCIPLINARIOS") {
-                            loadSelectedConsejo();
-                        } else if (label === "SANCIONES") {
-                            loadSelectedSanciones();
-                        } else if (label === "NOVEDADES") {
-                            loadSelectedNovedades();
-                        }
+                        loadTopic(label);
                     }
                 });
 
