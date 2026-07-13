@@ -52,6 +52,21 @@ const createInternoPhotoUploadSignature = ({ lpu, interno }) => {
   };
 };
 
+const getInternoPhotoDeliveryUrl = (lpu) => {
+  const normalizedLpu = normalizeLpu(lpu);
+  if (!/^\d{6}$/.test(normalizedLpu)) {
+    throw new Error("LPU debe tener seis cifras.");
+  }
+
+  const { cloudName } = getCloudinaryConfig();
+  return {
+    lpu: normalizedLpu,
+    publicId: `internos/${normalizedLpu}`,
+    secureUrl: `https://res.cloudinary.com/${cloudName}/image/upload/f_auto,q_auto/internos/${normalizedLpu}`,
+  };
+};
+
 module.exports = {
   createInternoPhotoUploadSignature,
+  getInternoPhotoDeliveryUrl,
 };

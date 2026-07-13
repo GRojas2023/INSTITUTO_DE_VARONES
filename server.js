@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 const { execFile } = require("child_process");
-const { createInternoPhotoUploadSignature } = require("./api/_lib/cloudinary");
+const { createInternoPhotoUploadSignature, getInternoPhotoDeliveryUrl } = require("./api/_lib/cloudinary");
 const fs = require("fs/promises");
 const http = require("http");
 const os = require("os");
@@ -2382,6 +2382,16 @@ const server = http.createServer(async (req, res) => {
     try {
       const body = await readJsonBody(req);
       sendJson(res, 200, createInternoPhotoUploadSignature(body || {}));
+    } catch (error) {
+      sendJson(res, 500, { error: error.message });
+    }
+    return;
+  }
+
+  if (req.url.startsWith("/api/fotos/interno") && req.method === "GET") {
+    try {
+      const url = new URL(req.url, `http://${HOST}:${PORT}`);
+      sendJson(res, 200, getInternoPhotoDeliveryUrl(url.searchParams.get("lpu") || ""));
     } catch (error) {
       sendJson(res, 500, { error: error.message });
     }

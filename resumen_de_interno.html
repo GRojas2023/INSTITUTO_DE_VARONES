@@ -1142,6 +1142,7 @@
         let activePhotoSuggestionIndex = -1;
         let selectedPhotoInterno = null;
         let selectedInterno = null;
+        let photoLoadToken = 0;
         let alojamientoHeaders = [];
         let alojamientoRows = [];
         let consejoHeaders = [];
@@ -1174,6 +1175,14 @@
             if (internoSubtitulo) internoSubtitulo.textContent = message;
         };
 
+        const clearInternoPhoto = () => {
+            if (!internoPhotoImg) return;
+            const placeholder = internoPhotoImg.parentElement?.querySelector(".material-symbols-outlined");
+            internoPhotoImg.removeAttribute("src");
+            internoPhotoImg.classList.add("hidden");
+            placeholder?.classList.remove("hidden");
+        };
+
         const resetResumen = () => {
             selectedInterno = null;
             if (internoNombre) internoNombre.textContent = "Buscar interno";
@@ -1182,7 +1191,40 @@
             resumenFields.forEach((field) => {
                 field.textContent = "-";
             });
+            clearInternoPhoto();
             clearDynamicTopicTables();
+        };
+
+        const setInternoPhoto = (url) => {
+            if (!internoPhotoImg || !url) return;
+            const placeholder = internoPhotoImg.parentElement?.querySelector(".material-symbols-outlined");
+            internoPhotoImg.src = url;
+            internoPhotoImg.classList.remove("hidden");
+            placeholder?.classList.add("hidden");
+        };
+
+        const loadInternoPhoto = async (lpu) => {
+            const token = ++photoLoadToken;
+            clearInternoPhoto();
+            const normalizedLpu = normalizeLpu(lpu);
+            if (!normalizedLpu) return;
+
+            try {
+                const response = await fetch(`${apiFotoInternoEndpoint}?lpu=${encodeURIComponent(normalizedLpu)}`);
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.secureUrl || token !== photoLoadToken) return;
+
+                const probe = new Image();
+                probe.onload = () => {
+                    if (token === photoLoadToken) setInternoPhoto(data.secureUrl);
+                };
+                probe.onerror = () => {
+                    if (token === photoLoadToken) clearInternoPhoto();
+                };
+                probe.src = `${data.secureUrl}?v=${Date.now()}`;
+            } catch (error) {
+                if (token === photoLoadToken) clearInternoPhoto();
+            }
         };
 
         const renderInterno = (row) => {
@@ -1201,6 +1243,7 @@
                 const headerName = field.dataset.field;
                 field.textContent = valueFor(row, headerName) || "-";
             });
+            loadInternoPhoto(lpu);
         };
 
         const findInternoByLpu = (lpu) => {
@@ -1439,14 +1482,6 @@
         const closePhotoModal = () => {
             photoModalBackdrop?.classList.remove("visible");
             hidePhotoSuggestions();
-        };
-
-        const setInternoPhoto = (url) => {
-            if (!internoPhotoImg || !url) return;
-            const placeholder = internoPhotoImg.parentElement?.querySelector(".material-symbols-outlined");
-            internoPhotoImg.src = url;
-            internoPhotoImg.classList.remove("hidden");
-            placeholder?.classList.add("hidden");
         };
 
         const loadAlojamiento = async () => {
