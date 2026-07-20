@@ -1481,20 +1481,8 @@
             <input id="sancion-criterio-conducta" name="criterioConducta" type="number" min="1" max="10" step="1">
           </div>
           <div class="form-field">
-            <label for="sancion-criterio-concepto">CRITERIO CONCEPTO</label>
-            <input id="sancion-criterio-concepto" name="criterioConcepto" type="number" min="1" max="10" step="1">
-          </div>
-          <div class="form-field">
             <label for="sancion-conducta-finaliza">CONDUCTA FINALIZA</label>
             <input id="sancion-conducta-finaliza" name="conductaFinaliza" type="text" readonly>
-          </div>
-          <div class="form-field">
-            <label for="sancion-concepto-finaliza">CONCEPTO FINALIZA</label>
-            <input id="sancion-concepto-finaliza" name="conceptoFinaliza" type="text" readonly>
-          </div>
-          <div class="form-field">
-            <label for="sancion-fase-finaliza">FASE FINALIZA</label>
-            <select id="sancion-fase-finaliza" name="faseFinaliza"></select>
           </div>
         </div>
       </div>
@@ -1645,12 +1633,9 @@
     const sancionConductaInicio = document.querySelector("#sancion-conducta-inicio");
     const sancionConceptoInicio = document.querySelector("#sancion-concepto-inicio");
     const sancionFaseInicio = document.querySelector("#sancion-fase-inicio");
-    const sancionFaseFinaliza = document.querySelector("#sancion-fase-finaliza");
     const sancionSancionSelect = document.querySelector("#sancion-sancion");
     const sancionCriterioConducta = document.querySelector("#sancion-criterio-conducta");
-    const sancionCriterioConcepto = document.querySelector("#sancion-criterio-concepto");
     const sancionConductaFinaliza = document.querySelector("#sancion-conducta-finaliza");
-    const sancionConceptoFinaliza = document.querySelector("#sancion-concepto-finaliza");
     const settingsButton = document.querySelector("#settings-button");
     const settingsModal = document.querySelector("#settings-modal");
     const closeSettingsButton = document.querySelector("#close-settings");
@@ -2761,25 +2746,14 @@
 
     const updateSancionFinalScores = () => {
       const conductaInicioValue = sancionConductaInicio?.value || "";
-      const conceptoInicioValue = sancionConceptoInicio?.value || "";
       const criterioConductaValue = sancionCriterioConducta?.value || "";
-      const criterioConceptoValue = sancionCriterioConcepto?.value || "";
       const conductaInicio = conductaInicioValue === "" ? NaN : Number(conductaInicioValue);
-      const conceptoInicio = conceptoInicioValue === "" ? NaN : Number(conceptoInicioValue);
       const criterioConducta = criterioConductaValue === "" ? NaN : Number(criterioConductaValue);
-      const criterioConcepto = criterioConceptoValue === "" ? NaN : Number(criterioConceptoValue);
 
       if (sancionConductaFinaliza) {
         const conductaFinal = conductaInicio - criterioConducta;
         sancionConductaFinaliza.value = Number.isFinite(conductaInicio) && Number.isFinite(criterioConducta)
           ? findCalificacionByNumber(conductaFinal) || String(conductaFinal)
-          : "";
-      }
-
-      if (sancionConceptoFinaliza) {
-        const conceptoFinal = conceptoInicio - criterioConcepto;
-        sancionConceptoFinaliza.value = Number.isFinite(conceptoInicio) && Number.isFinite(criterioConcepto)
-          ? findCalificacionByNumber(conceptoFinal) || String(conceptoFinal)
           : "";
       }
     };
@@ -2843,10 +2817,7 @@
       setScoreSelectValue(sancionConceptoInicio, rowValues[12]);
       sancionFaseInicio.value = rowValues[13] || "";
       sancionCriterioConducta.value = rowValues[14] || "";
-      sancionCriterioConcepto.value = rowValues[15] || "";
       sancionConductaFinaliza.value = rowValues[16] || "";
-      sancionConceptoFinaliza.value = rowValues[17] || "";
-      sancionFaseFinaliza.value = rowValues[18] || "";
 
       setCheckedValues(sancionTipoOptions, parseMultiValues(rowValues[6]));
       setMultiSummary(sancionTipoSummary, getCheckedValues(sancionTipoOptions));
@@ -2900,10 +2871,10 @@
         sancionConceptoInicio?.selectedOptions?.[0]?.textContent === "Seleccionar" ? "" : sancionConceptoInicio?.selectedOptions?.[0]?.textContent || "",
         formData.get("faseInicio") || "",
         formData.get("criterioConducta") || "",
-        formData.get("criterioConcepto") || "",
+        "",
         formData.get("conductaFinaliza") || "",
-        formData.get("conceptoFinaliza") || "",
-        formData.get("faseFinaliza") || "",
+        "",
+        "",
       ].map((value) => String(value || "").trim());
     };
 
@@ -3175,7 +3146,6 @@
 
     renderSancionCalificacionOptions();
     fillSelectOptions(sancionFaseInicio, faseOptions);
-    fillSelectOptions(sancionFaseFinaliza, faseOptions);
     fillSelectOptions(sancionSancionSelect, sancionOptions);
     renderTipoOptions();
     renderArticuloOptions();
@@ -3199,13 +3169,8 @@
     document.addEventListener("pointerdown", keepOneSancionMultiSelectOpen);
     document.addEventListener("focusin", keepOneSancionMultiSelectOpen);
     sancionConductaInicio?.addEventListener("change", updateSancionFinalScores);
-    sancionConceptoInicio?.addEventListener("change", updateSancionFinalScores);
     sancionCriterioConducta?.addEventListener("input", () => {
       clampCriterion(sancionCriterioConducta);
-      updateSancionFinalScores();
-    });
-    sancionCriterioConcepto?.addEventListener("input", () => {
-      clampCriterion(sancionCriterioConcepto);
       updateSancionFinalScores();
     });
 
