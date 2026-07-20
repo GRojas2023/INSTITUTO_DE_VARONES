@@ -50,6 +50,7 @@ const buildReplacementMap = ({ values = [], configSancion = "" } = {}) => {
   const month = getSpanishMonthName(now);
   const year = String(now.getFullYear());
   const currentLongDate = `${day} dias del mes de ${month} del ano ${year}`;
+  const currentLongDateWithoutYearWord = `${day} dias del mes de ${month} del ${year}`;
   const currentLongDateAlt = `${day} dias del ${month} del ano ${year}`;
   const sancion = row[10] || configSancion;
   const entries = {
@@ -62,6 +63,7 @@ const buildReplacementMap = ({ values = [], configSancion = "" } = {}) => {
     "fecha actual en el formato 20 dias del Julio del ano 2026": currentLongDateAlt,
     "fecha actual en el formato 20 dias del mes de Julio del año 2026": currentLongDate,
     "fecha actual en el formato 20 dias del mes de Julio del ano 2026": currentLongDate,
+    "fecha actual en el formato 20 dias del mes de Julio del 2026": currentLongDateWithoutYearWord,
     EXPEDIENTE: row[0],
     INTERNO: row[2],
     LPU: row[3],
