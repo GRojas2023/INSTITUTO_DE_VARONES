@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const { execFile } = require("child_process");
 const { createInternoPhotoUploadSignature, getInternoPhotoDeliveryUrl } = require("./api/_lib/cloudinary");
+const { buildSancionActaHtml } = require("./api/_lib/sancion-acta");
 const fs = require("fs/promises");
 const http = require("http");
 const os = require("os");
@@ -561,6 +562,11 @@ const renderSancionActaHtml = async ({ values = [] } = {}) => {
   if (!Array.isArray(values) || !values.some((value) => String(value || "").trim() !== "")) {
     throw new Error("No hay datos de sancion para renderizar el acta.");
   }
+
+  return buildSancionActaHtml({
+    values,
+    configSancion: await getSancionConfigD3(),
+  });
 
   await fs.access(SANCIONES_ACTA_TEMPLATE_PATH);
   await fs.access(SANCIONES_ACTA_HTML_SCRIPT_PATH);

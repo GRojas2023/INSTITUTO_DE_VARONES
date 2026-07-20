@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
     }
 
     const configSancion = await getSancionConfigD3();
-    return res.status(200).json(buildSancionActaHtml({ values, configSancion }));
+    return res.status(200).json(await buildSancionActaHtml({ values, configSancion }));
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }

@@ -1,3 +1,8 @@
+const fs = require("fs/promises");
+const path = require("path");
+
+const TEMPLATE_PATH = path.resolve(__dirname, "..", "..", "ACTA_SANCION.html");
+
 const escapeHtml = (value) => String(value || "")
   .replace(/&/g, "&amp;")
   .replace(/</g, "&lt;")
@@ -22,56 +27,86 @@ const getSpanishMonthName = (date) => new Intl.DateTimeFormat("es-AR", { month: 
   .format(date)
   .replace(/^./, (letter) => letter.toUpperCase());
 
-const getCurrentLongDate = () => {
+const normalizeMarkerKey = (value) => String(value || "")
+  .replace(/<[^>]+>/g, " ")
+  .replace(/&nbsp;/gi, " ")
+  .replace(/Â/g, "")
+  .replace(/Ã¡/g, "a")
+  .replace(/Ã©/g, "e")
+  .replace(/Ã­/g, "i")
+  .replace(/Ã³/g, "o")
+  .replace(/Ãº/g, "u")
+  .replace(/Ã±/g, "n")
+  .replace(/â€œ|â€|“|”/g, "")
+  .toLowerCase()
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-z0-9]/g, "");
+
+const buildReplacementMap = ({ values = [], configSancion = "" } = {}) => {
+  const row = Array.from({ length: 19 }, (_, index) => String(values[index] || "").trim());
   const now = new Date();
-  const day = new Intl.DateTimeFormat("es-AR", { day: "2-digit" }).format(now);
+  const day = String(now.getDate());
   const month = getSpanishMonthName(now);
   const year = String(now.getFullYear());
-  return `${day} dias del mes de ${month} del ano ${year}`;
+  const currentLongDate = `${day} dias del mes de ${month} del ano ${year}`;
+  const currentLongDateAlt = `${day} dias del ${month} del ano ${year}`;
+  const sancion = row[10] || configSancion;
+  const entries = {
+    "ACTA N": row[1],
+    "ACTA N°": row[1],
+    "año actual": year,
+    "ano actual": year,
+    "mes actual": month,
+    "fecha actual en el formato 20 dias del Julio del año 2026": currentLongDateAlt,
+    "fecha actual en el formato 20 dias del Julio del ano 2026": currentLongDateAlt,
+    "fecha actual en el formato 20 dias del mes de Julio del año 2026": currentLongDate,
+    "fecha actual en el formato 20 dias del mes de Julio del ano 2026": currentLongDate,
+    EXPEDIENTE: row[0],
+    INTERNO: row[2],
+    LPU: row[3],
+    "FECHA DEL HECHO": formatDateForSancionActa(row[4]),
+    "DESCRIPCION DEL HECHO": row[5],
+    TIPO: row[6],
+    ARTICULOS: row[7],
+    "ORDEN INTERNA": row[8],
+    "FECHA ORDEN INTERNA": formatDateForSancionActa(row[9]),
+    SANCION: sancion,
+    "CONDUCTA INICIO": row[11],
+    "CONCEPTO INICIO": row[12],
+    "FASE INICIO": row[13],
+    "CRITERIO CONDUCTA": row[14],
+    "CRITERIO CONCEPTO": row[15],
+    "CONDUCTA FINALIZA": row[16],
+    "CONCEPTO FINALIZA": row[17] || row[12],
+    "FASE FINALIZA": row[18],
+    "es el valor que existe en el rango D3 de la hoja Configuracion": configSancion,
+  };
+
+  return Object.fromEntries(
+    Object.entries(entries).map(([key, value]) => [normalizeMarkerKey(key), escapeHtml(value)])
+  );
 };
 
-const paragraph = (content, className = "") => `<p${className ? ` class="${className}"` : ""}>${content}</p>`;
+const replaceTemplateMarkers = (template, replacements) => template.replace(
+  /(Â«|«)([\s\S]*?)(Â»|»)/g,
+  (match, _open, rawKey) => {
+    const key = normalizeMarkerKey(rawKey);
+    return Object.prototype.hasOwnProperty.call(replacements, key) ? replacements[key] : "";
+  }
+);
 
-const buildSancionActaHtml = ({ values = [], configSancion = "" } = {}) => {
+const buildSancionActaHtml = async ({ values = [], configSancion = "" } = {}) => {
   const row = Array.from({ length: 19 }, (_, index) => String(values[index] || "").trim());
-  const [
-    expediente,
-    acta,
-    interno,
-    lpu,
-    fechaHecho,
-    descripcion,
-    tipo,
-    articulos,
-    ordenInterna,
-    fechaOrdenInterna,
-    sancion,
-    conductaInicio,
-    conceptoInicio,
-    faseInicio,
-    criterioConducta,
-    criterioConcepto,
-    conductaFinaliza,
-    conceptoFinaliza,
-    faseFinaliza,
-  ] = row.map(escapeHtml);
-  const currentYear = String(new Date().getFullYear());
-  const actaNumber = acta || "000";
-  const title = `ACTA N ${actaNumber} / ${currentYear} C.C.`;
-  const sanctionText = sancion || escapeHtml(configSancion);
+  const template = await fs.readFile(TEMPLATE_PATH, "utf8");
+  const replacements = buildReplacementMap({ values: row, configSancion });
+  const actaNumber = row[1] || "000";
+  const title = `ACTA N ${actaNumber} / ${new Date().getFullYear()} C.C.`;
 
-  const html = `
-    ${paragraph(`<strong>ACTA N ${actaNumber} / ${currentYear} C.C. - Sancion Disciplinaria / Interno ${interno} (L.P.U. ${lpu})</strong>`, "center")}
-    ${paragraph(`<strong><u>/ ${currentYear} C.C.</u></strong>`, "center")}
-    ${paragraph(`<strong class="red">CONSEJO CORRECCIONAL / CENTRO DE EVALUACION DE INTERNOS PROCESADOS</strong><br><strong>DEL INSTITUTO FEDERAL DE VARONES - C.P.F. III - NOA</strong>`, "center")}
-    ${paragraph(`En el Instituto Federal de Varones del Complejo Penitenciario Federal III "Centro Federal Noroeste Argentino" dependiente del Servicio Penitenciario Federal a los ${escapeHtml(getCurrentLongDate())}, se procede a labrar la presente al solo efecto de dejar constancia de la reunion efectuada por el <span class="red">Consejo Correccional</span>, a fin de tratar la <strong>SANCION DISCIPLINARIA</strong> tramita por expediente ${expediente}, impuesta al interno <strong>${interno} (L.P.U. ${lpu})</strong> a raiz de los hechos ocurridos el ${formatDateForSancionActa(fechaHecho)}: <strong>"${descripcion}"</strong>; transgrediendo de esta forma ${articulos}.`)}
-    ${paragraph(`Infraccion disciplinaria de caracter <strong>${tipo}</strong>, mediante Orden Interna <strong>${ordenInterna}</strong> de fecha <strong>${formatDateForSancionActa(fechaOrdenInterna)}</strong>, con el correctivo disciplinario correspondiente: <strong>${sanctionText}</strong>.`)}
-    ${paragraph(`Segun lo informado y previo analisis de las actuaciones, el interno registra actualmente Conducta <strong>${conductaInicio}</strong>, Concepto <strong>${conceptoInicio}</strong> y Fase <strong>${faseInicio}</strong>.`)}
-    ${paragraph(`Previo a ponderar los criterios de calificacion previstos, los integrantes del <span class="red">Consejo Correccional</span> arriban a la CONCLUSION, por consenso de criterios, de DISMINUIR <strong>${criterioConducta}</strong> PUNTOS en el guarismo de CONDUCTA y <strong>${criterioConcepto}</strong> PUNTOS en el guarismo de CONCEPTO del interno <strong>${interno} (L.P.U. ${lpu})</strong>, quedando calificado con Conducta <strong>${conductaFinaliza}</strong>, Concepto <strong>${conceptoFinaliza}</strong> y Fase <strong>${faseFinaliza}</strong>.`)}
-    ${paragraph(`<strong>No siendo para mas, se da por finalizada la presente firmando al pie los actuantes.</strong>`)}
-  `;
-
-  return { html, title };
+  return {
+    html: replaceTemplateMarkers(template, replacements),
+    title,
+  };
 };
 
 module.exports = {
