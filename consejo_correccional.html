@@ -2499,6 +2499,34 @@
       return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
     };
 
+    const isSancionDateLike = (value) => /^\d{1,2}\/\d{1,2}\/\d{4}$|^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
+
+    const isSancionTextLike = (value) => /art[ií]culo\s*19|inc\./i.test(String(value || "").trim());
+
+    const normalizeSancionRowForForm = (rowValues = []) => {
+      const values = Array.from({ length: Math.max(19, rowValues.length) }, (_, index) => String(rowValues[index] || ""));
+
+      if (!values[9] && !values[10] && isSancionDateLike(values[11]) && isSancionTextLike(values[12])) {
+        return [
+          ...values.slice(0, 9),
+          values[11],
+          values[12],
+          ...values.slice(13),
+        ].slice(0, 19);
+      }
+
+      if (rowValues.length <= 17) {
+        return [
+          ...rowValues.slice(0, 9),
+          "",
+          "",
+          ...rowValues.slice(9),
+        ].slice(0, 19);
+      }
+
+      return values.slice(0, 19);
+    };
+
     const closeSancionMultiSelects = (except = null) => {
       document.querySelectorAll("#sancion-record-modal .multi-select[open]").forEach((select) => {
         if (select !== except) {
@@ -2801,6 +2829,7 @@
     const setSancionFormValues = (rowValues = []) => {
       if (!sancionRecordForm) return;
 
+      rowValues = normalizeSancionRowForForm(rowValues);
       sancionRecordForm.querySelector('[name="expediente"]').value = rowValues[0] || "";
       sancionRecordForm.querySelector('[name="acta"]').value = rowValues[1] || "";
       sancionRecordForm.querySelector('[name="interno"]').value = rowValues[2] || "";

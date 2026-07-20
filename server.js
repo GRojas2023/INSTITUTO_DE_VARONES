@@ -211,6 +211,34 @@ const rowsFromSheetValues = (values) => {
   };
 };
 
+const isSancionDateLike = (value) => /^\d{1,2}\/\d{1,2}\/\d{4}$|^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
+
+const isSancionTextLike = (value) => /art[ií]culo\s*19|inc\./i.test(String(value || "").trim());
+
+const normalizeSancionRowShape = (row) => {
+  const values = Array.from({ length: Math.max(19, row.length) }, (_, index) => String(row[index] || ""));
+
+  if (!values[9] && !values[10] && isSancionDateLike(values[11]) && isSancionTextLike(values[12])) {
+    return [
+      ...values.slice(0, 9),
+      values[11],
+      values[12],
+      ...values.slice(13),
+    ].slice(0, 19);
+  }
+
+  if (row.length <= 17) {
+    return [
+      ...row.slice(0, 9),
+      "",
+      "",
+      ...row.slice(9),
+    ].slice(0, 19);
+  }
+
+  return values.slice(0, 19);
+};
+
 const getSancionesRows = async (forceRefresh = false) => {
   if (!forceRefresh && sancionesCache && sancionesCache.expiresAt > Date.now()) {
     return sancionesCache.data;
@@ -219,17 +247,7 @@ const getSancionesRows = async (forceRefresh = false) => {
   const values = await getSheetValues(SANCIONES_RANGE);
   const data = rowsFromSheetValues(values);
   const headers = SANCIONES_HEADERS.map((header, index) => data.headers[index] || header);
-  const rows = data.rows.map((row) => {
-    if (row.length <= 17) {
-      return [
-        ...row.slice(0, 9),
-        "",
-        "",
-        ...row.slice(9),
-      ];
-    }
-    return row;
-  });
+  const rows = data.rows.map(normalizeSancionRowShape);
 
   sancionesCache = {
     data: { ...data, headers, rows },
