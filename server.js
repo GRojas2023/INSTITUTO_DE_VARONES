@@ -1686,12 +1686,30 @@ const parseServiceText = (value) => String(value || "")
   });
 
 const getPartePersonalServicioArchivo = async () => {
-  const values = await getArchivedSheetValues(PARTE_PERSONAL_SERVICIO_SHEET, "A:B");
-  const rows = values
-    .map((row) => ({
-      savedAt: String(row[0] || ""),
-      service: parseServiceText(row[1]),
-    }))
+  const [serviceValues, staffValues] = await Promise.all([
+    getArchivedSheetValues(PARTE_PERSONAL_SERVICIO_SHEET, "A:B"),
+    getArchivedSheetValues(PARTE_PERSONAL_SHEET, "A:G"),
+  ]);
+
+  const staffByTimestamp = new Map();
+  for (const row of staffValues) {
+    const timestampMs = parseSheetTimestamp(row[0]);
+    if (!Number.isFinite(timestampMs)) continue;
+    const key = String(timestampMs);
+    if (!staffByTimestamp.has(key)) staffByTimestamp.set(key, []);
+    staffByTimestamp.get(key).push(row.slice(1));
+  }
+
+  const rows = serviceValues
+    .map((row) => {
+      const savedAt = String(row[0] || "");
+      const timestampMs = parseSheetTimestamp(savedAt);
+      return {
+        savedAt,
+        service: parseServiceText(row[1]),
+        staffNews: Number.isFinite(timestampMs) ? staffByTimestamp.get(String(timestampMs)) || [] : [],
+      };
+    })
     .filter((row) => Number.isFinite(parseSheetTimestamp(row.savedAt)) && row.service.length);
 
   return { rows };
