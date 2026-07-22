@@ -439,6 +439,48 @@
             color: #42474f;
             font-weight: 600;
         }
+
+        @media print {
+            body.module-printing {
+                display: block !important;
+                min-height: auto !important;
+                background: #ffffff !important;
+            }
+
+            body.module-printing > aside,
+            body.module-printing > #sidebar-toggle,
+            body.module-printing #page-shell > header,
+            body.module-printing #summary-content,
+            body.module-printing .photo-modal-backdrop {
+                display: none !important;
+            }
+
+            body.module-printing #page-shell {
+                display: block !important;
+                width: 100% !important;
+                max-width: none !important;
+                min-width: 0 !important;
+                margin-left: 0 !important;
+                overflow: visible !important;
+            }
+
+            body.module-printing #module-content,
+            body.module-printing #module-content.active,
+            body.module-printing #module-content > .module-document {
+                display: block !important;
+                width: 100% !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+            }
+
+            body.module-printing #module-content .content-shell {
+                margin-left: 0 !important;
+                width: 100% !important;
+                min-height: auto !important;
+                padding: 0 !important;
+            }
+        }
     </style>
 
 </head>
@@ -973,6 +1015,7 @@
             const nav = document.querySelector("#sidebar-nav");
             const summary = document.querySelector("#summary-content");
             const moduleContent = document.querySelector("#module-content");
+            const pageShell = document.querySelector("#page-shell");
             const links = Array.from(document.querySelectorAll("[data-shell-view], [data-shell-src]"));
             let moduleLoadId = 0;
             let moduleCleanup = null;
@@ -1089,6 +1132,23 @@
                 const link = links.find((item) => item.dataset.shellSrc === src);
                 if (src && link) showModule(src, link, true);
                 else showSummary();
+            });
+
+            const syncModulePrintState = () => {
+                const printingModule = moduleContent.classList.contains("active");
+                document.body.classList.toggle("module-printing", printingModule);
+                if (printingModule) {
+                    pageShell?.style.setProperty("margin-left", "0", "important");
+                    pageShell?.style.setProperty("max-width", "none", "important");
+                }
+            };
+
+            window.addEventListener("beforeprint", syncModulePrintState);
+            window.addEventListener("afterprint", () => {
+                document.body.classList.remove("module-printing");
+                const collapsed = document.body.classList.contains("sidebar-collapsed");
+                pageShell?.style.setProperty("margin-left", collapsed ? "0" : "240px", "important");
+                pageShell?.style.removeProperty("max-width");
             });
 
             const initialSrc = decodeURIComponent(location.hash.replace(/^#/, ""));
