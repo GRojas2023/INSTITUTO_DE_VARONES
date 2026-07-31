@@ -1,4 +1,13 @@
 const crypto = require("crypto");
+const {
+  SANCIONES_HEADER_RANGE,
+  SANCIONES_HEADERS,
+  SANCIONES_RANGE,
+  SANCIONES_SHEET_TITLE,
+  buildSancionValueRanges,
+  getSancionLayout,
+  mapSancionRowByLayout,
+} = require("./sanciones-layout");
 
 const SPREADSHEET_ID = "1DuK6GHozJGHSUQ7TVDIKODDm5XJnNpq9k9lheHWLvHE";
 const SHEET_RANGE = "consejo";
@@ -9,7 +18,6 @@ const CONFIG_SANCIONES_ARTICULOS_RANGE = "Configuracion!N:P";
 const CONFIG_SANCIONES_CALIFICACIONES_RANGE = "Configuracion!S:S";
 const INTERNOS_RANGE = "internos";
 const PERSONAL_COMPLEJO_RANGE = "PERSONAL_COMPLEJO!D:F";
-const SANCIONES_RANGE = "'SANCIONES_RESUELTA'!A:S";
 const ALOJAMIENTO_RANGE = "ALOJAMIENTO";
 const SHEET_ID = 0;
 const ARCHIVO_SHEET = "archivo";
@@ -30,27 +38,6 @@ const NOVEDADES_HEADERS = [
   "INICIO",
   "FINALIZACION",
   "OBSERVACION",
-];
-const SANCIONES_HEADERS = [
-  "EXPEDIENTE",
-  "ACTA N.",
-  "INTERNO",
-  "LPU",
-  "FECHA DEL HECHO",
-  "DESCRIPCION DEL HECHO",
-  "TIPO",
-  "ARTICULOS",
-  "ORDEN INTERNA",
-  "FECHA ORDEN INTERNA",
-  "SANCION",
-  "CONDUCTA INICIO",
-  "CONCEPTO INICIO",
-  "FASE INICIO",
-  "CRITERIO CONDUCTA",
-  "CRITERIO CONCEPTO",
-  "CONDUCTA FINALIZA",
-  "CONCEPTO FINALIZA",
-  "FASE FINALIZA",
 ];
 const ALOJAMIENTO_OPTIONS = [
   "ANEXO-PA",
@@ -939,55 +926,68 @@ const getNovedadesRows = async () => {
 
 // Sanciones
 
-const isSancionDateLike = (value) => /^\d{1,2}\/\d{1,2}\/\d{4}$|^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
-
-const isSancionTextLike = (value) => /art[ií]culo\s*19|inc\./i.test(String(value || "").trim());
-
-const normalizeSancionRowShape = (row) => {
-  const values = Array.from({ length: Math.max(19, row.length) }, (_, index) => String(row[index] || ""));
-
-  if (!values[9] && !values[10] && isSancionDateLike(values[11]) && isSancionTextLike(values[12])) {
-    return [
-      ...values.slice(0, 9),
-      values[11],
-      values[12],
-      ...values.slice(13),
-    ].slice(0, 19);
-  }
-
-  if (row.length <= 17) {
-    return [
-      ...row.slice(0, 9),
-      "",
-      "",
-      ...row.slice(9),
-    ].slice(0, 19);
-  }
-
-  return values.slice(0, 19);
-};
-
 const getSancionesRows = async () => {
   const values = await getSheetValues(SANCIONES_RANGE);
   const data = rowsFromSheetValues(values);
-  const headers = SANCIONES_HEADERS.map((header, index) => data.headers[index] || header);
-  const rows = data.rows.map(normalizeSancionRowShape);
+  const layout = getSancionLayout(data.headers);
+  const rowPairs = data.rows
+    .map((row, index) => ({
+      row: mapSancionRowByLayout(row, layout),
+      rowNumber: data.rowNumbers[index],
+    }))
+    .filter(({ row }) => row.some((cell) => String(cell || "").trim() !== ""));
 
-  return { ...data, headers, rows };
+  return {
+    headers: [...SANCIONES_HEADERS],
+    rows: rowPairs.map(({ row }) => row),
+    rowNumbers: rowPairs.map(({ rowNumber }) => rowNumber),
+    cachedAt: data.cachedAt,
+  };
 };
 
 const normalizeSancionValues = (values) => {
-  const rowValues = Array.from({ length: 19 }, (_, index) => String(values?.[index] || "").trim());
+  const rowValues = Array.from(
+    { length: SANCIONES_HEADERS.length },
+    (_, index) => String(values?.[index] || "").trim()
+  );
   if (!rowValues.some(Boolean)) {
     throw new Error("Completa al menos un campo antes de guardar.");
   }
   return rowValues;
 };
 
+const getSancionSheetLayout = async () => {
+  const values = await getSheetValues(SANCIONES_HEADER_RANGE);
+  return getSancionLayout(values[0] || []);
+};
+
+const writeSancionValues = async (token, rowNumber, rowValues, layout) => {
+  const valuesUrl = new URL(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values:batchUpdate`
+  );
+  const response = await fetch(valuesUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      valueInputOption: "USER_ENTERED",
+      data: buildSancionValueRanges(rowNumber, rowValues, layout),
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Google Sheets update error: ${response.status} ${text}`);
+  }
+};
+
 const insertSancionRow = async (values) => {
   const rowValues = normalizeSancionValues(values);
+  const layout = await getSancionSheetLayout();
   const token = await getAccessToken();
-  const sheetId = await getSheetIdByTitle("SANCIONES_RESUELTA");
+  const sheetId = await getSheetIdByTitle(SANCIONES_SHEET_TITLE);
   const batchUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`);
   const insertResponse = await fetch(batchUrl, {
     method: "POST",
@@ -1015,24 +1015,7 @@ const insertSancionRow = async (values) => {
     throw new Error(`Google Sheets insert error: ${insertResponse.status} ${text}`);
   }
 
-  const valuesUrl = new URL(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent("'SANCIONES_RESUELTA'!A2:S2")}`
-  );
-  valuesUrl.searchParams.set("valueInputOption", "USER_ENTERED");
-
-  const updateResponse = await fetch(valuesUrl, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ values: [rowValues] }),
-  });
-
-  if (!updateResponse.ok) {
-    const text = await updateResponse.text();
-    throw new Error(`Google Sheets update error: ${updateResponse.status} ${text}`);
-  }
+  await writeSancionValues(token, 2, rowValues, layout);
 
   return getSancionesRows();
 };
@@ -1044,25 +1027,9 @@ const updateSancionRow = async (rowNumber, values) => {
   }
 
   const rowValues = normalizeSancionValues(values);
+  const layout = await getSancionSheetLayout();
   const token = await getAccessToken();
-  const valuesUrl = new URL(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(`'SANCIONES_RESUELTA'!A${targetRow}:S${targetRow}`)}`
-  );
-  valuesUrl.searchParams.set("valueInputOption", "USER_ENTERED");
-
-  const response = await fetch(valuesUrl, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ values: [rowValues] }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Google Sheets update error: ${response.status} ${text}`);
-  }
+  await writeSancionValues(token, targetRow, rowValues, layout);
 
   return getSancionesRows();
 };
@@ -1074,7 +1041,7 @@ const deleteSancionRow = async (rowNumber) => {
   }
 
   const token = await getAccessToken();
-  const sheetId = await getSheetIdByTitle("SANCIONES_RESUELTA");
+  const sheetId = await getSheetIdByTitle(SANCIONES_SHEET_TITLE);
   const batchUrl = new URL(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`);
   const response = await fetch(batchUrl, {
     method: "POST",

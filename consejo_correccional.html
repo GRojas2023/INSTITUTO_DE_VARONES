@@ -1677,6 +1677,27 @@
     const spreadsheetId = "1DuK6GHozJGHSUQ7TVDIKODDm5XJnNpq9k9lheHWLvHE";
     const sheetName = "consejo";
     const sancionesSheetName = "SANCIONES_RESUELTA";
+    const sancionHeaders = [
+      "EXPEDIENTE",
+      "ACTA N°",
+      "INTERNO",
+      "LPU",
+      "FECHA DEL HECHO",
+      "DESCRIPCION DEL HECHO",
+      "TIPO",
+      "ARTICULOS",
+      "ORDEN INTERNA",
+      "FECHA ORDEN INTERNA",
+      "SANCION",
+      "CONDUCTA INICIO",
+      "CONCEPTO INICIO",
+      "FASE INICIO",
+      "CRITERIO CONDUCTA",
+      "CRITERIO CONCEPTO",
+      "CONDUCTA FINALIZA",
+      "CONCEPTO FINALIZA",
+      "FASE FINALIZA",
+    ];
     const sheetsCallback = "renderConsejoCorreccional";
     const sancionesSheetsCallback = "renderSancionesResuelta";
     const viewConfig = {
@@ -1694,7 +1715,7 @@
       },
       sanciones: {
         title: "Sanciones",
-        subtitle: "Vista de la hoja SANCIONES_RESUELTA del libro Consejo Correccional, rango A:S.",
+        subtitle: "Vista de la hoja SANCIONES_RESUELTA, organizada por los encabezados de cada columna.",
         searchPlaceholder: "Buscar sanciones, internos o resoluciones...",
         tableLabel: "Sanciones resueltas",
         emptyMessage: "La hoja SANCIONES_RESUELTA no tiene registros cargados.",
@@ -2263,6 +2284,40 @@
       renderTable(headers, dataRows.map((row) => (row.c || []).map(formatCell)));
     };
 
+    const getPublicSancionColumnIndexes = (headers) => {
+      const headerKeys = headers.map(getHeaderKey);
+      const columnIndexes = sancionHeaders.map((header) => headerKeys.indexOf(getHeaderKey(header)));
+      const missingHeaders = sancionHeaders.filter((_, index) => columnIndexes[index] < 0);
+
+      if (missingHeaders.length) {
+        throw new Error(`Faltan encabezados requeridos: ${missingHeaders.join(", ")}`);
+      }
+
+      return columnIndexes;
+    };
+
+    const renderPublicSancionesTable = (sheetTable) => {
+      const cols = sheetTable?.cols || [];
+      const rawRows = (sheetTable?.rows || []).map((row) => (row.c || []).map(formatCell));
+      let sourceHeaders = cols.map((column) => column?.label || column?.id || "");
+      let columnIndexes;
+
+      try {
+        columnIndexes = getPublicSancionColumnIndexes(sourceHeaders);
+      } catch {
+        sourceHeaders = rawRows.shift() || [];
+        columnIndexes = getPublicSancionColumnIndexes(sourceHeaders);
+      }
+
+      const rows = rawRows
+        .map((row) => normalizeSancionRowForForm(
+          columnIndexes.map((columnIndex) => row[columnIndex] || "")
+        ))
+        .filter((row) => row.some((cell) => String(cell || "").trim() !== ""));
+
+      renderTable([...sancionHeaders], rows);
+    };
+
     const renderApiRows = (data) => {
       renderTable(data.headers || [], data.rows || [], data.rowNumbers || []);
     };
@@ -2492,21 +2547,13 @@
       const values = Array.from({ length: Math.max(19, rowValues.length) }, (_, index) => String(rowValues[index] || ""));
 
       if (!values[9] && !values[10] && isSancionDateLike(values[11]) && isSancionTextLike(values[12])) {
-        return [
+        const repairedValues = [
           ...values.slice(0, 9),
           values[11],
           values[12],
           ...values.slice(13),
-        ].slice(0, 19);
-      }
-
-      if (rowValues.length <= 17) {
-        return [
-          ...rowValues.slice(0, 9),
-          "",
-          "",
-          ...rowValues.slice(9),
-        ].slice(0, 19);
+        ];
+        return Array.from({ length: 19 }, (_, index) => String(repairedValues[index] || ""));
       }
 
       return values.slice(0, 19);
@@ -3454,7 +3501,14 @@
         return;
       }
 
-      renderSheetRows(rows);
+      try {
+        viewConfig.sanciones.showActions = false;
+        viewConfig.sanciones.allowNew = false;
+        updateViewChrome();
+        renderPublicSancionesTable(response.table);
+      } catch (error) {
+        setMessageRow(error.message);
+      }
     };
 
     const loadConsejoSheet = () => {
@@ -3483,6 +3537,8 @@
     const loadSancionesSheet = () => {
       if (!table) return;
       currentView = "sanciones";
+      viewConfig.sanciones.showActions = true;
+      viewConfig.sanciones.allowNew = true;
       updateViewChrome();
       setMessageRow("Cargando sanciones desde Google Sheets...");
 
@@ -3523,7 +3579,7 @@
       const params = new URLSearchParams({
         tqx: `out:json;responseHandler:${sancionesSheetsCallback}`,
         sheet: sancionesSheetName,
-        range: "A:S",
+        range: "A:ZZ",
       });
 
       script.src = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?${params}`;
